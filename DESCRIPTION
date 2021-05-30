@@ -1,0 +1,14 @@
+Package: PLCE
+Type: Package
+Title: Semiparametric Estimation of Average Partial Effects
+Version: 1.0
+Date: 2020-09-21
+Author: Marc Ratkovic
+Maintainer: Marc Ratkovic <ratkovic@princeton.edu>
+Description: More about what it does (maybe more than one line)
+License: What license is it under?
+Imports: Rcpp (>= 1.0.5)
+Requires: splines, MASS, sandwich, sensemakr, Rfast, splines2, RcppEigen
+Encoding: UTF-8
+LinkingTo: Rcpp, RcppArmadillo
+RoxygenNote: 7.1.1
