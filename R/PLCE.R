@@ -384,12 +384,12 @@ hoe.inner <-
 
             if (fit.pc | TRUE) {
         Xmat.adjust <- as.matrix(cbind(
-          basest.all.inner[replaceme > 2,],
-          basesy.all.inner[replaceme > 2,],
-          # fits.t[replaceme > 2],
-          # fits.y[replaceme > 2],
-          # soe.t,
-          # soe.y,
+          #basest.all.inner[replaceme > 2,],
+          #basesy.all.inner[replaceme > 2,],
+           fits.t[replaceme > 2],
+           fits.y[replaceme > 2],
+           soe.t,
+           soe.y,
           NULL
         ))
         
