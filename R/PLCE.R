@@ -1700,12 +1700,12 @@ allbases <- function(y,y2.b,treat,treat.b,treat.y,X,id, replaceme,
   basest0 <- generate.bases(treat.b, treat, X, X, id=NULL,replaceme)
   basest0 <- apply(basest0,2,scale2)
   treat.b.2 <-
-    treat.b - basest0%*%sparsereg_GCV(treat.b[replaceme>4], basest0[replaceme>4,])$coef#, EM = T, verbose = F, id=NULL)$fitted
+    treat.b - basest0%*%sparsereg_GCV(treat.b[replaceme>4], basest0[replaceme>4,])$coef#,   id=NULL)$fitted
   #basest0 <- cbind(basest0, generate.bases(treat.b.2, treat, X, X, id=NULL,replaceme))
   basest0 <- cleanNAs(basest0)
   
   basesy0 <- generate.bases(y2.b, y2.b, cbind(X), cbind(X),id=NULL, replaceme)
-  y2.b.2 <- y2.b - sparsereg(y2.b, basesy0, EM = T, verbose = F, id=NULL)$fitted
+  y2.b.2 <- y2.b - sparsereg(y2.b, basesy0,   id=NULL)$fitted
   #basesy0.2 <- generate.bases(y2.b.2, y2.b.2, cbind(X), cbind(X),id=NULL, replaceme) ## Don't need REs--already partialed out!
   #basesy0<-cbind(basesy0,basesy0.2)
   basesy0 <- cleanNAs(basesy0)
@@ -1728,12 +1728,12 @@ allbases <- function(y,y2.b,treat,treat.b,treat.y,X,id, replaceme,
   ## Initial outcome and propensity model ----
   sy <- sparsereg(y,
                   cbind(basesy0, basest0),
-                  EM = T,
-                  verbose = F, 
+                  
+                   
                   id=NULL)
   res1.y <- as.vector(scale2(lm(y ~ sy$fit)$res))
   
-  st <- sparsereg(treat, basest0, EM = T, verbose = F, id=NULL)
+  st <- sparsereg(treat, basest0,   id=NULL)
   res1 <- as.vector(scale2(treat - st$fit))
   
   ## Make residual nonparametric terms ----
