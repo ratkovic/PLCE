@@ -259,19 +259,17 @@ plce <-
     point.est <- hl.mean(points.run)
     var.est <-
       hl.mean(se.run ^ 2) + (hl.mean(points.run ^ 2) - point.est ^ 2) / length(points.run)
-    out1 <-
-      list(
-        "point" = (points.run),
-        "se" = (se.run),
-        "treatpoint" = treatpoints.run
-      )
+    
+    sens.out <- rowMeans(sens.run)
+    sens.out[1] <- point.est
+    sens.out[2] <- (var.est) ^ .5
     out1 <-
       list(
         "point" = point.est,
         "se" = (var.est) ^ .5,
         "jk" = (var(points.run) / 2) ^ .5,
         "treatpoint" = points.run,
-        "sens" = rowMeans(sens.run),
+        "sens" = sens.out,
         "treat.res" = treat.res.run,
         "loo.hoe" = NULL,
         "loo.lm" = NULL
