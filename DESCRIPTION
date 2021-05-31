@@ -7,7 +7,8 @@ Author: Marc Ratkovic
 Maintainer: Marc Ratkovic <ratkovic@princeton.edu>
 Description: More about what it does (maybe more than one line)
 License: What license is it under?
-Imports: Rcpp (>= 3.5.0)
+Imports: Rcpp (>= 1.0.5)
+Depends: R (>= 3.5.0)
 Requires: splines, MASS, sandwich, sensemakr, Rfast, splines2, RcppEigen
 Encoding: UTF-8
 LinkingTo: Rcpp, RcppArmadillo
