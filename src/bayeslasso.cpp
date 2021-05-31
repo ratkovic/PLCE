@@ -55,7 +55,7 @@ Rcpp::List bayesLasso(arma::vec y,
         if(conv > 0.0000001*sdy){
             //*  Update XpX
             for(int i_p = 1; i_p<p; i_p++){
-                XpXsolve(i_p,i_p) = XpX(i_p,i_p)+Etausqinv(i_p);
+                XpXsolve(i_p,i_p) = XpX(i_p,i_p)+Etausqinv(i_p)+1e-6;
             }
             
             //* Update beta along nonzero indices
@@ -81,10 +81,11 @@ Rcpp::List bayesLasso(arma::vec y,
             lambda_temp = sqrt(
                 (alpha(0) - 1) / (sum(Ewtsqtausq) / 2 + 1)
             );
+            //(alpha - 1) / (sum(Ewtsqtausq) / 2 + 1)
             lambda(0) = lambda_temp;
             
             //* Update sigma_sq
-            prec = (n/2+(p-1)/2+1)/(
+            prec = (n/2+p/2+1)/(
                 sum((y-fits)%(y-fits))+sum(beta%beta% Etausqinv/2)
             );
             sigma_sq = 1/prec;

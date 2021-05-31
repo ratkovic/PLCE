@@ -3,7 +3,7 @@ library(profvis)
 library(microbenchmark)
 library(lme4)
 library(grf)
-# devtools::load_all('~/Dropbox/InfluenceFunctions/APSRsubmission/02_Resubmission/04a_Replication/Code/PLCE')
+devtools::load_all('~/Dropbox/Github/PLCE')
  
 
 options(device="quartz")
@@ -14,7 +14,7 @@ ran.num<-round(runif(1)*1e8)
 
 ## First point estimate: 0.8677028 
 theta.run<-se.run<-cover.run<-NULL
-n<-500
+n<-2000
 k<-5
 
 wts<-1
@@ -87,11 +87,14 @@ verbose <- EM <- T
           mean((X[,1]-s1$fitted.values)^2)^.5
           mean((X[,1]-s2$fitted.values)^2)^.5
           
+         # microbenchmark(PLCE:::sparsereg_GCV(treat,X,id0=NULL),sparsereg::sparsereg(treat,X, EM=T,verbose=F))
           #alpha.min<-PLCE:::sparsereg_findalpha(treat,X,id=ids.map)
           #s2<-PLCE:::sparsereg(y,X,id,alpha.prior="custom",alpha.use=alpha.min,edf=T)
           
+          # microbenchmark(PLCE:::sparsereg_GCV(treat,X,id0=NULL),PLCE::sparsereg(treat,X, EM=T,verbose=F))
+          
            #h2<-hoe(Y,treat,X)
-         h1<-plce(Y,treat,X,num.fit = 5,printevery=1,var.type = "HC3",fit.interference = F);h1$point;h1$se
+         h1<-plce(Y,treat,X,num.fit = 5,printevery=1,var.type = "HC3",fit.interference = T);h1$point;h1$se
           #h2<-plce(Y,treat,X,num.fit = 20,printevery=10);h2$point;h2$se
           
           

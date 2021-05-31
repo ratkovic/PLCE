@@ -379,17 +379,19 @@ hoe.inner <-
       
       fits.REs.t <- fits.REs.y <- NULL
       
-      soe.y<-make.soe(basesy.all.inner,id,sy,y,fits.y,fits.REs.y,replaceme)
-      soe.t<-make.soe(basest.all.inner,id,st,treat,fits.t,fits.REs.t,replaceme)
+      
+      soe.t<-make.soe(apply(basest.all.inner,2,scale2),id,st,treat,fits.t,fits.REs.t,replaceme)
+      #y.temp <-lm(y~soe.t,weights=1*(replaceme < 3) )$res
+      soe.y<-make.soe(apply(basesy.all.inner,2,scale2),id,sy,y,fits.y,fits.REs.y,replaceme)
 
             if (fit.pc | TRUE) {
         Xmat.adjust <- as.matrix(cbind(
-          #basest.all.inner[replaceme > 2,],
-          #basesy.all.inner[replaceme > 2,],
-           fits.t[replaceme > 2],
-           fits.y[replaceme > 2],
-           soe.t,
-           soe.y,
+            # basest.all.inner[replaceme > 2,],
+            # basesy.all.inner[replaceme > 2,],
+            fits.t[replaceme > 2],
+            fits.y[replaceme > 2],
+            soe.t,
+            soe.y,
           NULL
         ))
         
@@ -1588,7 +1590,7 @@ check.cor <- function(X, thresh = 0, nruns = 2) {
 
 ### GCV for sparsereg
 
-sparsereg_GCV <- function(y0,X0,id0=NULL, usecpp=FALSE){
+sparsereg_GCV <- function(y0,X0,id0=NULL, usecpp=TRUE){
   n<- length(y0)
   p <- ncol(X0)
   if(ncol(as.matrix(X0))<3 ){
@@ -1598,21 +1600,33 @@ sparsereg_GCV <- function(y0,X0,id0=NULL, usecpp=FALSE){
   if(usecpp==FALSE){
   alpha.max <- max(n*log(ncol(X0)), ncol(X0)*1.25)
   alpha.min <- min(ncol(X0)*1.25, n*log(ncol(X0))/2)
-  alpha.list <- seq((alpha.max), alpha.min,length=10)
-  GCV.out<-sapply(alpha.list, FUN=function(z) 
+  alpha.schedule <- seq((alpha.max), alpha.min,length=10)
+  GCV.out<-sapply(alpha.schedule, FUN=function(z) 
     tryCatch(sparsereg(y=y0,X=X0, id=id0, edf=T, alpha.prior = "custom", alpha.use = z )$GCV,
              error = function(h) 1e7, warning = function(h) 1e7
     )
   )# Close out sapply
-  a.min <-alpha.list[GCV.out==min(GCV.out)]
-  model.out <- sparsereg(y=y0,X=X0, id=id0, edf=T, alpha.prior = "custom", alpha.use = a.min )
+  # a.min <-alpha.schedule[GCV.out==min(GCV.out)]
+  lm1<-lm(GCV.out~alpha.schedule+I(alpha.schedule^2))
+  alpha.lm <- -(lm1$coef[2])/(2*lm1$coef[3])
+  alpha.min <- ifelse(
+    lm1$coef[3] > 0 ,
+    -(lm1$coef[2])/(2*lm1$coef[3]),
+    alpha.schedule[which.min(GCV.out)]
+  )
+  alpha.min <- rcppClamp(alpha.min,alpha.schedule[1],rev(alpha.schedule)[1])
+  model.out <- sparsereg(y=y0,X=X0, id=id0, edf=T, alpha.prior = "custom", alpha.use = alpha.min )
   
   } else{
   
   ## New using Cpp bayeslasso to find alpha!
   alpha.schedule <-
     seq(log(8*n*log(p)),log(p),length=8)
-  
+  #alpha.max <- max(n*log(ncol(X0)), ncol(X0)*1.25)
+  #alpha.min <- min(ncol(X0)*1.25, n*log(ncol(X0))/2)
+  #alpha.schedule <- log(seq((alpha.max), alpha.min,length=10))
+  #m1<-mget(ls())
+  #save(m1,file="diagnose.Rda")
   gcv.out <- log(sapply(alpha.schedule, FUN=function(z) bayesLasso(y0,cbind(1,X0),exp(z))$GCV ))
   lm1<-lm(gcv.out~alpha.schedule+I(alpha.schedule^2))
   alpha.lm <- -(lm1$coef[2])/(2*lm1$coef[3])
@@ -1621,7 +1635,7 @@ sparsereg_GCV <- function(y0,X0,id0=NULL, usecpp=FALSE){
     -(lm1$coef[2])/(2*lm1$coef[3]),
     alpha.schedule[which.min(gcv.out)]
   )
-  alpha.min <- rcppClamp(alpha.min,alpha.schedule[1],alpha.schedule[8])
+  alpha.min <- rcppClamp(alpha.min,alpha.schedule[1],rev(alpha.schedule)[1])
   #print(alpha.min)
   #model.out <- sparsereg(y=y0,X=X0, id=id0, edf=T, alpha.prior = "custom", alpha.use =exp( alpha.min ))
   model.out <- sparsereg(y=y0,X=X0, id=id0, edf=T, alpha.prior = "custom", alpha.use =exp( alpha.min ))

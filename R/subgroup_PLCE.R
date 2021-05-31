@@ -223,13 +223,13 @@ sparsereg <- function(y, X, treat = NULL,
       # E step: Update weights and related quantities ----
       gammastar<-gamma
       if(sparseregweights){
-        # x.wts<-rep(NA,p)
-        # x.wts<-abs(lambda * beta[2:(p+1)] * prec^.5)
-        # x.wts <- rcppClamp(x.wts,exp(-5.99),exp(9.95))
-        # wts.mat <- cbind(x.wts, gammastar)
-        # wts[2:(p+1)] <- apply(wts.mat, 1, updatewts.EM,seq.obj0=seq.obj)
+        x.wts<-rep(NA,p)
+        x.wts<-abs(lambda * beta[2:(p+1)] * prec^.5)
+        x.wts <- rcppClamp(x.wts,exp(-5.99),exp(9.95))
+        wts.mat <- cbind(x.wts, gammastar)
+        wts[2:(p+1)] <- apply(wts.mat, 1, updatewts.EM,seq.obj0=seq.obj)
         # if(p.re>0) wts[-c(1:(p+1))] <- 1
-        wts<-rep(1,p+1)
+        # wts<-rep(1,p+1)
         
       } else{
         wts<-rep(1,p+1)
