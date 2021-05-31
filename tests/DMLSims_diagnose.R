@@ -14,7 +14,7 @@ ran.num<-round(runif(1)*1e8)
 
 ## First point estimate: 0.8677028 
 theta.run<-se.run<-cover.run<-NULL
-n<-2000
+n<-200
 k<-5
 
 wts<-1
@@ -38,8 +38,9 @@ verbose <- EM <- T
           # covariates
           
           ids.map<-sample(as.factor(letters[1:20]),n,T)
-          ids.map <-sample(as.factor(1:50),n,T)
+          ids.map <-sample((1:50),n,T)
           res.map <- rnorm(length(unique(ids.map)))
+          res.map <- rnorm(50)
           names(res.map)<-sort(unique(ids.map))
           res.true <-  (res.map[ids.map])*addREs
 

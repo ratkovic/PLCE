@@ -271,7 +271,7 @@ plce <-
         "se" = (var.est) ^ .5,
         "jk" = (var(points.run) / 2) ^ .5,
         "treatpoint" = points.run,
-        "sens" = sens.run,
+        "sens" = rowMeans(sens.run),
         "treat.res" = treat.res.run,
         "loo.hoe" = NULL,
         "loo.lm" = NULL
@@ -449,10 +449,11 @@ hoe.inner <-
         lm.s <- lm(y2 ~ treat2 + Xmat.2)
         name.use <- names(lm.s$coef)[2]
         sens1 <- (sensemakr(lm.s, name.use)$sensitivity_stats)
+        sens1 <- as.numeric(unlist(sens1)[-1])
+        sens.run <- cbind(sens.run, sens1)
+        rownames(sens.run)<-names(sensemakr(lm.s,name.use)$sensitivity_stats)[-1]
       }
-      sens1 <- as.numeric(unlist(sens1)[-1])
-      sens.run <- cbind(sens.run, sens1)
-      #rownames(sens.run)<-names(sensemakr(lm1,name.use)$sensitivity_stats)[-1]
+
       point.out[i.outer] <- lm1$coef[2]
       se.out[i.outer] <- vcovHC(lm1, var.type)[2, 2] ^ .5
       n.se <- length(lm1$res)
@@ -470,7 +471,7 @@ hoe.inner <-
         "U.adjust" = NULL,
         "subset" = 5 - replaceme,
         "treatpoint" = NULL,
-        "sens" = sens.run,
+        "sens" = (sens.run),
         "treat.res" = treat.res.inner,
         "loo" = NULL
       )
