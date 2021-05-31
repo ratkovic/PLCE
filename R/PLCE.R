@@ -1036,7 +1036,7 @@ trimbases.boot_quick <-
 trimbases.boot <-
   function(y,
            basesy0,
-           trimboot.num = 50,
+           trimboot.num = 10,
            wts.use = NULL,
            id = NULL,
            replaceme) {
@@ -1627,7 +1627,8 @@ sparsereg_GCV <- function(y0,X0,id0=NULL, usecpp=TRUE){
   #alpha.schedule <- log(seq((alpha.max), alpha.min,length=10))
   #m1<-mget(ls())
   #save(m1,file="diagnose.Rda")
-  gcv.out <- log(sapply(alpha.schedule, FUN=function(z) bayesLasso(y0,cbind(1,X0),exp(z))$GCV ))
+  X0.temp <- apply(X0,2,scale2)
+  gcv.out <- log(sapply(alpha.schedule, FUN=function(z) bayesLasso(y0,cbind(1,X0.temp),exp(z))$GCV ))
   lm1<-lm(gcv.out~alpha.schedule+I(alpha.schedule^2))
   alpha.lm <- -(lm1$coef[2])/(2*lm1$coef[3])
   alpha.min <- ifelse(
