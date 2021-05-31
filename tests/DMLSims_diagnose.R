@@ -94,7 +94,7 @@ verbose <- EM <- T
           # microbenchmark(PLCE:::sparsereg_GCV(treat,X,id0=NULL),PLCE::sparsereg(treat,X, EM=T,verbose=F))
           
            #h2<-hoe(Y,treat,X)
-         h1<-plce(Y,treat,X,num.fit = 5,printevery=1,var.type = "HC3",fit.interference = T);h1$point;h1$se
+         h1<-plce(Y,treat,X,num.fit = 20,printevery=1,var.type = "HC3",fit.interference = T);h1$point;h1$se
           #h2<-plce(Y,treat,X,num.fit = 20,printevery=10);h2$point;h2$se
           
           
