@@ -20,38 +20,27 @@
 #' @importFrom tibble as_tibble
 #' @importFrom Matrix Matrix t
 #'
-#' @export
 
 
 
 
 #' @rdname sparsereg
-#' #' @param data An optional dataframe with column names matching the terms in \code{formula},
-#' when provided.
+#' #' @param y
 #'
 #'
 #'
 
 sparsereg <- function(y, X, treat = NULL,
                       id = NULL,
-                      data = NULL,
                       weights = 1,
-                      iter = 2000, burnin = 2000, thin = 10,
                       type = "linear",
-                      EM = TRUE,
-                      prior_covariance = "half-t",
                       beta.init = NULL,
                       unpen = NULL,
-                      trim.X = TRUE,
-                      verbose = FALSE,
                       scale.type = "none",
                       tol = 1e-3,## 1e-5 in package
-                      blockupdate = TRUE,
                       alpha.prior = "parametric",
                       alpha.use = NULL, 
                       sparseregweights=FALSE,
-                      iter.initialize = 2, ## 20 in package
-                      qfunction.calc = FALSE,
                       edf = FALSE
 ) {
   
@@ -59,7 +48,8 @@ sparsereg <- function(y, X, treat = NULL,
   # Preproces ------
   # Remove NA rows and constant columns to get complete (cmp) dataset
   if (length(weights) == 1) weights <- rep(1, length(y))
-  
+  EM <- TRUE
+  verbose  <- FALSE
   # Ensure X is named
   name_X<-function(X){
     if(length(colnames(X)) == ncol(X)) return(X)
@@ -275,7 +265,7 @@ sparsereg <- function(y, X, treat = NULL,
                             XprimeX,
                             Xprimey,
                             type, 
-                            blockupdate, 
+                            blockupdate = TRUE, 
                             beta, 
                             trim = TRUE,
                             i.iter,
