@@ -7,9 +7,7 @@
 #' May be continous, binary, or count.
 #' @param X Matrix of covariates. Typical vocabulary would refer to these as
 #'   "pre-treatment" covariates.
-#' @param inner.boot The number of bootstrapped estimates to do in each subsample.  Default is 30.
 #' @param num.fit The number of cross-fitting iterations to run.  Default is 25.
-#'            inner.boot = 30,
 #' @param var.type The type of variance estimate, passed to \code{vcovHC} in sandwich. Options are
 #' \code{HC0}, \code{HC1}, \code{HC2}, \code{HC3}, with \code{HC3} the default.
 #'
@@ -19,7 +17,6 @@
 #' @return \describe{
 #' \item{point}{The estimated average partial effect.}
 #' \item{se}{Standard error of the estimate of the average partial effect.}
-#'
 #' \item{sens}{Results from the sensitivity analysis.}
 #'}
 #'
@@ -49,7 +46,6 @@ plce <-
            treat,
            X,
            id=NULL,
-           inner.boot = 30,
            num.fit = 25,
            var.type = "HC3",
            sens = TRUE,
@@ -220,7 +216,6 @@ plce <-
           treat0 = treat0.temp,
           basest = bases.t.temp,
           basesy = bases.y.temp,
-          inner.boot = inner.boot,
           replaceme = replaceme.temp,
           var.type,
           lin.adj = NULL,
@@ -287,7 +282,6 @@ hoe.inner <-
            treat0,
            basest,
            basesy,
-           inner.boot,
            replaceme,
            var.type,
            lin.adj = NULL,
@@ -476,195 +470,6 @@ hoe.inner <-
     return(output)
   }
 
-
-hoe.inner_cholesky <-
-  function(y,
-           treat,
-           y0,
-           treat0,
-           basest,
-           basesy,
-           inner.boot,
-           replaceme,
-           var.type,
-           lin.adj = NULL,
-           lin.adj.t = NULL,
-           sens = NULL,
-           fit.pc = NULL,
-           X.rest,
-           X.resy,
-           beta.t.init,
-           beta.y.init,
-           id,
-           fit.interference, 
-           fit.treatment.heteroskedasticity
-  ) {
-    
-    
-    ## Save original inputs ----
-    n <- length(y)
-    
-    ##Declare holders for loop
-    sens.run <- point.out <- se.out <- NULL
-    treat.res.inner <- matrix(NA, nr = n, nc = 2)
-
-    if(fit.interference){
-    basest.all <- cbind(basest, X.rest)
-    basesy.all <- cbind(basesy, X.resy)
-    }else{
-      basest.all <- cbind(basest)
-      basesy.all <- cbind(basesy)
-    }
-    colnames(basest.all) <- paste("X", 1:ncol(basest.all), sep = "_")
-    colnames(basesy.all) <- paste("X", 1:ncol(basesy.all), sep = "_")
-    
-    basest.all<-basest.all[,check.cor(basest.all,thresh=0.001)$k]
-    basesy.all<-basesy.all[,check.cor(basesy.all,thresh=0.001)$k]
-    
-    basest.all <- apply(basest.all, 2, scale2)
-    basesy.all <- apply(basesy.all, 2, scale2)
-    
-    y.orthog<-y
-    treat.orthog <-treat
-    if(length(id)>0) {
-      X.dum<-cbind(sample(y),sample(y))
-      colnames(X.dum)<-c("X1","X2")
-      X.dum<-apply(X.dum,2,FUN=function(z) fastLm(z~cbind(1,y))$res)
-      y.orthog <- y-sparsereg_GCV(y,X.dum,id=NULL)$fit
-      
-      colnames(X.dum)<-c("X1","X2")
-      X.dum<-apply(X.dum,2,FUN=function(z) fastLm(z~cbind(1,treat))$res)
-      treat.orthog <- treat-sparsereg_GCV(treat,X.dum,id=NULL)$fit
-      
-    }
-    
-    
-    for (i.outer in 1:2) {
-      
-      
-      ## Select bases off splits 1,2 ----
-      basest.all.inner <- orthog.me(treat.orthog, basest.all, weights.lm = (replaceme<3))
-      basesy.all.inner <- orthog.me(y.orthog, basesy.all, weights.lm = (replaceme<3))
-      
-      basest.all.inner <- basest.all[,check.cor(basest.all[replaceme<3,])$k] #orthog.me(treat.orthog, basest.all, weights.lm = (replaceme<3))
-      basesy.all.inner <- basesy.all[,check.cor(basesy.all[replaceme<3,])$k] #orthog.me(y.orthog, basesy.all, weights.lm = (replaceme<3))
-      
-      id.temp <-NULL
-      if(length(id)>0) id.temp<-id[replaceme < 3]
-
-      st <- sparsereg_GCV(treat[replaceme < 3], basest.all.inner[replaceme < 3, ], id.temp)
-      select.lin.t <- (abs(st$coef) > 1e-3)
-
-      sy <- sparsereg_GCV(y[replaceme < 3], basesy.all.inner[replaceme < 3, ], id.temp)
-      select.lin.y <- (abs(sy$coef) > 1e-3)
-      
-      soe.t<-soe.y<-NULL
-      
-      threshind <-
-        floor(min(n / 2 * .8, length(st$coef) + length(sy$coef) - 2))
-      
-      thresh1 <-
-        sort(c(abs(st$coef), abs(sy$coef)), dec = T)[threshind]
-      select.lin.y[abs(sy$coef) < thresh1] <- F
-      select.lin.t[abs(st$coef) < thresh1] <- F
-      
-      fits.t <- cbind(basest.all.inner) %*% st$coef
-      fits.y <- cbind(basesy.all.inner) %*% sy$coef
-      
-      fits.REs.t <- fits.REs.y <- NULL
-      
-      soe.y<-make.soe(basesy.all.inner,id,sy,y,fits.y,fits.REs.y,replaceme)
-      soe.t<-make.soe(basest.all.inner,id,st,treat,fits.t,fits.REs.t,replaceme)
-      
-      if (fit.pc | TRUE) {
-        Xmat.adjust <- as.matrix(cbind(#basest.all[replaceme > 2, select.lin.t],
-          fits.t[replaceme > 2],
-          fits.y[replaceme > 2],
-          soe.t,
-          soe.y
-        ))
-        
-        
-        if (length(Xmat.adjust) == 0) {
-          Xmat.adjust <- matrix(rnorm(sum(replaceme > 2)))
-          Xmat.adjust <-
-            matrix(lm(Xmat.adjust ~ y[replaceme > 2] + treat[replaceme > 2])$res)
-        }
-        
-      } else {
-        Xmat.adjust <- as.matrix(cbind(lin.adj[replaceme > 2, ]))
-        
-      }
-      
-      if(F){
-        cat("#########################\n")
-        cat("Dimension Check: Candidate Bases\n")
-        cat(ncol(basesy.all.inner)+ncol(basest.all.inner),"\n")
-        cat("Dimension Check:: Selected Bases\n")
-        cat(ncol(Xmat.adjust),"\n")
-      }
-      
-      if(length(id)>0){
-        id.2 <- id[replaceme>2]
-        y2 <- lm(y0[replaceme > 2]~Xmat.adjust)$res
-        treat2 <- lm(treat0[replaceme > 2]~Xmat.adjust)$res
-        res.y.temp <- suppressMessages(predict(lmer(y2~(1|id.2))))
-        res.t.temp <- suppressMessages(predict(lmer(treat2~(1|id.2))))
-        
-
-        Xmat.adjust<-cbind(Xmat.adjust,res.y.temp,res.t.temp)
-        lm1 <-
-          lm(y0[replaceme > 2] ~ treat0[replaceme > 2] + Xmat.adjust)
-      } else {
-        lm1 <-
-          lm(y0[replaceme > 2] ~ treat0[replaceme > 2] + Xmat.adjust)
-      }
-      lm1$coef[2]
-      keeps <- which(!is.na(lm1$coef[-c(1:2)]))
-      Xmat.adjust <- cleanNAs(Xmat.adjust[, keeps])
-      lm1 <- lm(y0[replaceme > 2] ~ treat0[replaceme > 2] + Xmat.adjust)
-      lm.inf <- lm(treat0[replaceme > 2] ~ Xmat.adjust)
-      name.use <- names(lm1$coef)[2]
-      
-      treat.res.inner[replaceme > 2, i.outer] <-
-        lm(treat0[replaceme > 2] ~ Xmat.adjust)$res
-      sens1 <- NULL
-      sens1$sensitivity_stats <- rnorm(3)
-      if (sens) {
-        y2 <- c(y0[replaceme > 2], y0[replaceme > 2], y0[replaceme > 2])
-        treat2 <-
-          c(treat0[replaceme > 2], treat0[replaceme > 2], treat0[replaceme > 2])
-        Xmat.2 <- rbind(Xmat.adjust, Xmat.adjust, Xmat.adjust)
-        lm.s <- lm(y2 ~ treat2 + Xmat.2)
-        name.use <- names(lm.s$coef)[2]
-        sens1 <- (sensemakr(lm.s, name.use)$sensitivity_stats)
-      }
-      sens1 <- as.numeric(unlist(sens1)[-1])
-      sens.run <- cbind(sens.run, sens1)
-      #rownames(sens.run)<-names(sensemakr(lm1,name.use)$sensitivity_stats)[-1]
-      point.out[i.outer] <- lm1$coef[2]
-      se.out[i.outer] <- vcovHC(lm1, var.type)[2, 2] ^ .5
-      n.se <- length(lm1$res)
-      k.se <- sum(!is.na(lm1$coef))
-      se.adj <- 1 / (3 - k.se / n.se)
-      ## Switch indices for crossfit ----
-      replaceme <- 5 - replaceme
-    }# Close outer loop
-    output <-
-      list(
-        "point" = (point.out),
-        "se" = (se.out ^ 2 / 3) ^ .5,
-        "Ut" = NULL,
-        "Uy" = NULL,
-        "U.adjust" = NULL,
-        "subset" = 5 - replaceme,
-        "treatpoint" = NULL,
-        "sens" = sens.run,
-        "treat.res" = treat.res.inner,
-        "loo" = NULL
-      )
-    return(output)
-  }
 
 
 
