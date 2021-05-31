@@ -1057,6 +1057,11 @@ trimbases.boot <-
     indsamp <- which(replaceme > 4)
     numsamp <- length(indsamp)
     numsamp <- min(numsamp,1000)
+    sy0 <-
+      sparsereg_GCV(y,
+                    basesy0)
+    trimboot.num <- rcppClamp(max(ceiling(sy0$dof),2)*5,10,50)
+    
     for (i.samp in 1:trimboot.num) {
 
       #samp.curr <- which(sample(1:3, n, T) == 1)
