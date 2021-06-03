@@ -1,15 +1,14 @@
 Package: PLCE
 Type: Package
-Title: Semiparametric Estimation of Average Partial Effects
+Title: Semiparametrically Efficient Estimation of a Marginal Effects
 Version: 1.0
-Date: 2020-09-21
-Author: Marc Ratkovic
+Date: 2021-06-01
+Author: Marc Ratkovic <ratkovic@princeton.edu> [aut, cre]
 Maintainer: Marc Ratkovic <ratkovic@princeton.edu>
-Description: More about what it does (maybe more than one line)
-License: What license is it under?
-Imports: Rcpp (>= 1.0.5)
+Description: The marginal effect is the average effect of a one-unit move of a treatment variable on an outcome, after adjusting for background covariates.  The method works by combining machine learning to adjust for both the covariates as well as any nonlinear, interactive functions of the covariates.  It also handles random effects and allows for valid inference in the presence if covariate-driven interference.
+License: GPL (>= 2)
+Imports: Rcpp (>= 1.0.5), splines, MASS, sandwich, sensemakr, splines2, RcppEigen, ccaPP, coda, lme4, randomForest, AER
 Depends: R (>= 3.5.0)
-Requires: splines, MASS, sandwich, sensemakr, Rfast, splines2, RcppEigen
 Encoding: UTF-8
 LinkingTo: Rcpp, RcppArmadillo
 RoxygenNote: 7.1.1

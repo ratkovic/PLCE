@@ -21,7 +21,7 @@
 //' @param resvec A single integer.
 //' @param onesvec A single integer.
 //' @param theta A single integer.
-//' @export
+//' @noRd
 // [[Rcpp::export]]
 
 Rcpp::List basis_rcpp(const arma::colvec & matvec,
@@ -62,7 +62,7 @@ Rcpp::List basis_rcpp(const arma::colvec & matvec,
 //' @param resvec A single integer.
 //' @param onesvec A single integer.
 //' @param theta A single integer.
-//' @export
+//' @noRd
 // [[Rcpp::export]]
 
 
@@ -104,9 +104,9 @@ Rcpp::List basisvec_rcpp(const arma::colvec & matvec,
 //' 
 //' @param treat A vector of outcomes.
 //' @param X A matrix of spline bases.
-//' @param inter.schedule An interaction schedule.
+//' @param inter_schedule An interaction schedule.
 //' @param one_to_n A vector of length 1:length(treat).
-//' @export
+//' @noRd
 
 // [[Rcpp::export]]
 Rcpp::List corbases(arma::vec treat, 

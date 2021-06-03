@@ -29,7 +29,7 @@ using namespace RcppArmadillo;
 //' @param X A single integer.
 //' @param y A single integer.
 //' @param w A single integer.
-//' @export
+//' @noRd
 // [[Rcpp::export]]
 
 List fastres_cpp(const arma::mat& X, const arma::mat& y, const arma::colvec& w) {

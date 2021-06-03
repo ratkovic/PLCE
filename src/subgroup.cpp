@@ -7,7 +7,7 @@ using namespace RcppArmadillo ;
 
 //' Update beta
 //' 
-//' @export
+//' @noRd
 // [[Rcpp::export()]]
 Rcpp::List solve_cpp(arma::mat XpX,
                           arma::colvec Xpy
@@ -21,25 +21,24 @@ Rcpp::List solve_cpp(arma::mat XpX,
 
 //' Armadillo Standard Deviation
 //' 
-//' @export
+//' @param v1 vector to take sd
+//' @noRd
 // [[Rcpp::export()]]
 double sd_cpp(arma::colvec v1
 ) {
   
   arma::mat output = arma::pow(cov(v1),.5);
   return output[0];
-  //return Rcpp::List::create(Rcpp::Named("sd") = output);
 }
 
 
 
 //' Armadillo Median
 //' 
-//' @export
+//' @noRd
 // [[Rcpp::export()]]
 double median_cpp(arma::colvec v1
 ) {
   
   return(arma::median(v1));
-  //return Rcpp::List::create(Rcpp::Named("sd") = output);
 }

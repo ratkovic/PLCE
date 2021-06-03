@@ -2,16 +2,17 @@
 ^\.Rproj\.user$
 README.Rmd
 README.md
+README.html
 README_files
 ^\.httr-oauth$
 ^PLCE\.Rcheck$
 ^PLCE.*\.tar\.gz$
 ^PLCE.*\.tgz$
 
-
 ^data-raw$
 ^development$
 ^replications$
+
 
 ^\.github$
 ^\.ccache$

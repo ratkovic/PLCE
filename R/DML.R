@@ -16,6 +16,8 @@
 #'      lsls_ce <- DML(Y = obs, D = treat, X = X, method_out = 'LASSO', method_treat = 'LASSO')
 #'      
 #' @importFrom randomForest randomForest 
+#' @importFrom AER ivreg 
+#' @noRd
 
 DML <- function(Y, D, X, n_split = 2, method_out = "RF", method_treat = "RF", fit.lm = "IV", ...) {
   # sample splitting stage
@@ -63,7 +65,7 @@ DML <- function(Y, D, X, n_split = 2, method_out = "RF", method_treat = "RF", fi
 }
 
 
-DML_predict <- function(outcome, predictor, method, train_idx, ...) {
+DML_predict <- function(outcome, predictor, method = "RF", train_idx, ...) {
   if (method == "RF") {
     # double machine learning
     args <- list(...)
@@ -75,22 +77,22 @@ DML_predict <- function(outcome, predictor, method, train_idx, ...) {
     
   } else if (method == "LASSO") {
     #lsout <- cv.glmnet(x = predictor[!train_idx, ], y = outcome[!train_idx], alpha = 1, nfolds = 5)
-    lsout <- rlasso(outcome[!train_idx] ~ predictor[!train_idx, ])
+    # lsout <- rlasso(outcome[!train_idx] ~ predictor[!train_idx, ])
     # lsout <- glmnet(x = predictor[!train_idx, ], y = outcome[!train_idx], alpha = 1)
-    predict_diffed <- outcome[train_idx] - predict(lsout, newdata = predictor[train_idx,])
+    # predict_diffed <- outcome[train_idx] - predict(lsout, newdata = predictor[train_idx,])
   } else if (method == "SL") {
     #lsout <- cv.glmnet(x = predictor[!train_idx, ], y = outcome[!train_idx], alpha = 1, nfolds = 5
-    p1<-predictor[!train_idx, ]
-    p2<-predictor[train_idx, ]
-    lsout <- SuperLearner(outcome[!train_idx] ,data.frame(p1),newX=data.frame(p2),
-                          SL.library =c("SL.glm", "SL.glmnet","SL.randomForest", "SL.loess",  "SL.polymars", "SL.mean"))
-    # lsout <- glmnet(x = predictor[!train_idx, ], y = outcome[!train_idx], alpha = 1)
-    predict_diffed <- outcome[train_idx] - lsout$SL.predict
+    # p1<-predictor[!train_idx, ]
+    # p2<-predictor[train_idx, ]
+    # lsout <- SuperLearner(outcome[!train_idx] ,data.frame(p1),newX=data.frame(p2),
+    #                       SL.library =c("SL.glm", "SL.glmnet","SL.randomForest", "SL.loess",  "SL.polymars", "SL.mean"))
+    # # lsout <- glmnet(x = predictor[!train_idx, ], y = outcome[!train_idx], alpha = 1)
+    # predict_diffed <- outcome[train_idx] - lsout$SL.predict
   } else if (method == "KRLS"){
-    p1<-predictor[!train_idx, ]
-    p2<-predictor[train_idx, ]
-    lsout <- krls(y=outcome[!train_idx] ,X=(p1))
-    predict_diffed <- outcome[train_idx] - predict(lsout,newdata=p2)$fit
+    # p1<-predictor[!train_idx, ]
+    # p2<-predictor[train_idx, ]
+    # lsout <- krls(y=outcome[!train_idx] ,X=(p1))
+    # predict_diffed <- outcome[train_idx] - predict(lsout,newdata=p2)$fit
   } else {
     stop("Proper method required!\n")
   }

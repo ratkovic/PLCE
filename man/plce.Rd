@@ -2,45 +2,100 @@
 % Please edit documentation in R/PLCE.R
 \name{plce}
 \alias{plce}
-\title{Sparse regression for experimental and observational data.}
+\title{Estimating a Marginal Effect in the Partially Linear Causal Effect Model.}
 \usage{
-plce(y, treat, X, inner.boot = 30, num.fit = 25, var.type = "HC3")
+plce(
+  y,
+  treat,
+  X,
+  id = NULL,
+  num.fit = 25,
+  var.type = "HC3",
+  sens = TRUE,
+  printevery = 10,
+  fit.interference = TRUE,
+  fit.treatment.heteroskedasticity = TRUE
+)
 }
 \arguments{
 \item{y}{Vector of the dependent, or outcome variable.}
 
-\item{treat}{Treatment variable, for which the average partial effect is desired. 
+\item{treat}{Treatment variable, for which the marginal effect is desired.
 May be continous, binary, or count.}
 
-\item{X}{Matrix of covariates. Typical vocabulary would refer to these as
-"pre-treatment" covariates.}
+\item{X}{Matrix of covariates to be adjusted for in estimating the marginal effect. 
+A machine learning method is used to adjust not just for the covariates but also
+nonlinear, interactive functions of the covariates.}
 
-\item{inner.boot}{The number of bootstrapped estimates to do in each subsample.  Default is 30.}
+\item{id}{A vector with elements denoting groupings to fit via random effects.}
 
-\item{num.fit}{The number of cross-fitting iterations to run.  Default is 25.
-inner.boot = 30,}
+\item{num.fit}{The number of cross-fitting iterations to run.  Default is 25.}
 
 \item{var.type}{The type of variance estimate, passed to \code{vcovHC} in sandwich. Options are
 \code{HC0}, \code{HC1}, \code{HC2}, \code{HC3}, with \code{HC3} the default.}
+
+\item{sens}{Whether to fit the sensitivity analysis using \code{sensemakr}.}
+
+\item{printevery}{How frequently to print output during estimation.  Default is 10.}
+
+\item{fit.interference}{Whether to adjust for interference.  Default is \code{TRUE}.}
+
+\item{fit.treatment.heteroskedasticity}{Whether to adjust for bias induced through
+heteroskedasticity in the treatment variable.  Default is \code{TRUE}.}
 }
 \value{
-\describe{ 
-\item{point}{The estimated average partial effect.}
-\item{se}{Standard error of the estimate of the average partial effect.}
-
+\describe{
+\item{point}{The estimated marginal effect.}
+\item{se}{Standard error of the estimate of the marginal effect.}
 \item{sens}{Results from the sensitivity analysis.}
+\item{treat.res}{Residuals from modeling the treatment model. Used in the
+positivity diagnostic.}
 }
 }
 \description{
-Sparse regression for experimental and observational data.
+Estimating a Marginal Effect in the Partially Linear Causal Effect Model.
 }
 \examples{
-\dontrun{
+ \dontrun{
+## This example takes you through an implementation
+# of the PLCE model. We first create the sample size and
+# number of covariates.
+set.seed(1234)
+n <- 1000
+p <- 5
 
-}
+## Generate covariate matrix
+X <- matrix(rnorm(n * p), nrow = n, ncol = p)
+X<- apply(X,2,scale)
 
+## Generate random effects
+ids.map <- sample(letters[1:10], n, TRUE)
+res.map <- rnorm(10)
+names(res.map) <- letters[1:10]
+res.true <-  (res.map[ids.map])
+
+## Generate the treatment and outcome
+treat <- (X[, 1]) +  res.true + rnorm(n)
+Y <- 1 + treat * (X[, 1] ^ 2) + res.true + rnorm(n)
+
+## Fit the PLCE model
+plce1 <-
+plce(
+ y=Y,
+ treat=treat,
+ X=X, id = ids.map,
+ printevery = 1,
+ num.fit = 5
+  )
+
+## Results: Point estimate, standard error,
+##   sensitivity analysis
+plce1$point
+plce1$se
+plce1$sens
+ }
 }
 \references{
-Ratkovic, Marc.  2020. "Relaxing Assumptions, Improving Inference: 
+Ratkovic, Marc.  2021. "Relaxing Assumptions, Improving Inference:
 Utilizing Machine Learning for Valid Causal Inference."  Working Paper.
 }

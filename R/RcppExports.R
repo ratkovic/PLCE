@@ -5,9 +5,9 @@
 #' 
 #' @param treat A vector of outcomes.
 #' @param X A matrix of spline bases.
-#' @param inter.schedule An interaction schedule.
+#' @param inter_schedule An interaction schedule.
 #' @param one_to_n A vector of length 1:length(treat).
-#' @export
+#' @noRd
 NULL
 
 #' Create a basis vector
@@ -16,7 +16,7 @@ NULL
 #' @param resvec A single integer.
 #' @param onesvec A single integer.
 #' @param theta A single integer.
-#' @export
+#' @noRd
 basis_rcpp <- function(matvec, resvec, onesvec, theta) {
     .Call('_PLCE_basis_rcpp', PACKAGE = 'PLCE', matvec, resvec, onesvec, theta)
 }
@@ -27,7 +27,7 @@ basis_rcpp <- function(matvec, resvec, onesvec, theta) {
 #' @param resvec A single integer.
 #' @param onesvec A single integer.
 #' @param theta A single integer.
-#' @export
+#' @noRd
 basisvec_rcpp <- function(matvec, resvec, onesvec, theta) {
     .Call('_PLCE_basisvec_rcpp', PACKAGE = 'PLCE', matvec, resvec, onesvec, theta)
 }
@@ -53,7 +53,7 @@ bayesLasso <- function(y, X, alpha) {
 #' @param X A single integer.
 #' @param y A single integer.
 #' @param w A single integer.
-#' @export
+#' @noRd
 fastres_cpp <- function(X, y, w) {
     .Call('_PLCE_fastres_cpp', PACKAGE = 'PLCE', X, y, w)
 }
@@ -84,21 +84,22 @@ arma_symm <- function(v1) {
 
 #' Update beta
 #' 
-#' @export
+#' @noRd
 solve_cpp <- function(XpX, Xpy) {
     .Call('_PLCE_solve_cpp', PACKAGE = 'PLCE', XpX, Xpy)
 }
 
 #' Armadillo Standard Deviation
 #' 
-#' @export
+#' @param v1 vector to take sd
+#' @noRd
 sd_cpp <- function(v1) {
     .Call('_PLCE_sd_cpp', PACKAGE = 'PLCE', v1)
 }
 
 #' Armadillo Median
 #' 
-#' @export
+#' @noRd
 median_cpp <- function(v1) {
     .Call('_PLCE_median_cpp', PACKAGE = 'PLCE', v1)
 }
