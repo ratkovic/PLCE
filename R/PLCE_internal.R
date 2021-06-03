@@ -582,7 +582,7 @@ pos_measure <- function(obj, trim = .0125) {
   #mode.dens<-d1$x[d1$y==max(d1$y)][1]
   #obj<-obj-mode.dens
   obj <- obj - mean(obj, na.rm = T)
-  obj <- obj / sd_cpp2(as.vector(obj))
+  obj <- obj / sd(as.vector(obj), na.rm=T)
   
   vec1 <- rowMeans(obj ^ 4, na.rm = T)#-rowMeans(obj^3,na.rm=T)
   vec2 <- rowMeans(obj ^ 2, na.rm = T) ^ 2
@@ -630,7 +630,9 @@ pos_measure <- function(obj, trim = .0125) {
   #bc2<-EnvStats::boxcox(expected,optimize=T)
   #bc1<-EnvStats::boxcox(vec1,optimize=T)
   vec1 <- vec1#^(bc1$lambda)
-  expected <- expected#^(bc2$lambda)
+  drops.vec <- is.na(vec1)
+  vec1 <- vec1[!drops.vec]
+  expected <- expected[!drops.vec]#^(bc2$lambda)
   ind <- sort(vec1, decreasing = F, ind = T)
   obs <- ind$x
   
