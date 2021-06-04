@@ -2,46 +2,24 @@
 [![R build status](https://github.com/ratkovic/PLCE/workflows/R-CMD-check/badge.svg)](https://github.com/ratkovic/PLCE/actions)
 <!-- badges: end -->
 
-# PLCE: Software for Estimating the Partially Linear Causal Effect Model
+# PLCE
+Software for the Partially Linear Causal Effect Model, as given in Ratkovic (2021).
 
-This software is used to estimate the average effect of a treatment variable on an outcome, after controlling for background covariates.  Unlike the standard regression model, the proposed method combines a machine learning method to control for the background covariates while using a regression on the treatment variable of interest.  
+### Install latest version
 
-The method, the Partially Linear Causal Effect (PLCE) model, models both the treatment and the outcome variable, returning a causal effect of the treatment on the outcome under the assumption that there are no omitted confounders and the treatment is random. The method handles random effects, incorporates a set of sensitivity analyses and, as shown in the accompanying manuscript, outperforms several existing method that use machine learning for causal inference.
-
-For more details, see  [Ratkovic (2021)](https://scholar.princeton.edu/sites/default/files/plce_round3.pdf).
-
-
-## Installation 
-
-The latest version can be installed by:
+You can install the latest version by running:
 ```R
 devtools::install_github('ratkovic/PLCE')
 ```
 
+### Troubleshooting installation
 
-## An Example
-
-
-```R
-library(PLCE)
-
-# Generate data.
-n <- 1000
-p <- 10
-X <- matrix(rnorm(n * p), n, p)
-
-```
-
-## Troubleshooting installation
-
-The software relies on `C++` code integrated into the `R` code through the `Rcpp` package.  If the software does not run on your machine, it may be fixed by ensuring that your compilers are set up properly.
-
-This advice below comes from `KRLS` by Hazlet and Sonnet [(link)](https://github.com/lukesonnet/KRLS).
+This version uses `Rcpp` extensively for speed reasons. These means you need to have the right compilers on your machine.
 
 #### Windows
 If you are on Windows, you will need to install [RTools](https://cran.r-project.org/bin/windows/Rtools/) if you haven't already. If you still are having difficulty with installing and it says that the compilation failed, try installing it without support for multiple architectures:
 ```R
-devtools::install_github('ratkovic/PLCE', args=c('--no-multiarch'))
+devtools::install_github('lukesonnet/KRLS', args=c('--no-multiarch'))
 ```
 
 #### Mac OSX
@@ -60,3 +38,16 @@ sudo tar fvxz gfortran-4.8.2-darwin13.tar.bz2 -C /
 ```
 
 Also see section 2.16 [here](http://dirk.eddelbuettel.com/code/rcpp/Rcpp-FAQ.pdf)
+
+#### An Example
+
+
+```R
+library(PLCE)
+
+# Generate data.
+n <- 1000
+p <- 10
+X <- matrix(rnorm(n * p), n, p)
+
+```
