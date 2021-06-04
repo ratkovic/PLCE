@@ -17,5 +17,4 @@ README_files
 ^\.github$
 ^\.ccache$
 ^tic\.R$
-^\.travis\.yml$
 ^codecov\.yml$
