@@ -19,7 +19,7 @@ devtools::install_github('ratkovic/PLCE')
 ```
 
 
-## An Example
+## The Problem
 
 
 ```R
