@@ -51,7 +51,7 @@ Rcpp::List bayesLasso(arma::vec y,
     
     arma::vec beta = arma::zeros(p)+sdy*10;
     arma::vec beta_last = beta;
-    for(int i_outer = 0; i_outer < 5; i_outer++){
+    for(int i_outer = 0; i_outer < 500; i_outer++){
         if(conv > 0.0000001*sdy){
             //*  Update XpX
             for(int i_p = 1; i_p<p; i_p++){
