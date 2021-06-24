@@ -131,3 +131,5 @@ lines(make.rank(obj$diff),obj$diff,col=cols[1],lwd=2)
 legend.txt<-c("Hawks Experiment","Doves Experiment")
 legend("topright",legend=legend.txt,col=gg_color(2),lty=1,xpd=T,lwd=2,bg="gray90",bty="n",box.col="gray90")
 
+
+## Testing BayesLasso
