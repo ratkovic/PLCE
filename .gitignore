@@ -40,3 +40,4 @@ vignettes/*.pdf
 
 # Dropbox Variables
 .DS*
+.DS_Store
