@@ -154,7 +154,7 @@ make.simdata <-
     
     y <- res.true + rnorm(n)
     
-    X <- MASS::mvrnorm(n, rep(0, k), Sig = var.mat)
+    X <- mvrnorm(n, rep(0, k), Sig = var.mat)
     X <- apply(X, 2, scale)
     
     X[, 1] <- X[, 1] / (mean(X[, 1] ^ 2) ^ .5)
