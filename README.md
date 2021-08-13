@@ -19,19 +19,6 @@ devtools::install_github('ratkovic/PLCE')
 ```
 
 
-## The Problem
-
-
-```R
-library(PLCE)
-
-# Generate data.
-n <- 1000
-p <- 10
-X <- matrix(rnorm(n * p), n, p)
-
-```
-
 ## Troubleshooting installation
 
 The software relies on `C++` code integrated into the `R` code through the `Rcpp` package.  If the software does not run on your machine, it may be fixed by ensuring that your compilers are set up properly.
