@@ -2,9 +2,11 @@
 
 export()
 export(plce)
+export(pos_plot)
 import(stats)
 importFrom(AER,ivreg)
 importFrom(MASS,ginv)
+importFrom(MASS,mvrnorm)
 importFrom(Rcpp,sourceCpp)
 importFrom(RcppEigen,fastLm)
 importFrom(ccaPP,corPearson)

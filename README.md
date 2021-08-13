@@ -25,10 +25,43 @@ devtools::install_github('ratkovic/PLCE')
 ```R
 library(PLCE)
 
-# Generate data.
-n <- 1000
-p <- 10
-X <- matrix(rnorm(n * p), n, p)
+# Set seed, for replication
+set.seed(1)
+
+# Function for generating data from the manuscript.  True marginal effect is 1.
+data.all <- PLCE:::make.simdata(n = 1000, k = 5)
+
+# Create local versions of outcome (Y), treatment (treat),
+# covariates (X), groups (ids.map),
+# and covariates with levels included 
+# as indicator variables (X.all).
+
+Y <- data.all$Y
+treat <- data.all$treat
+X <- data.all$X
+ids.map <- data.all$ids.map
+X.all <- data.all$X.all
+
+#  Fit the plce model.
+plce_fit <- plce(
+  y = Y,
+  treat = treat,
+  X = X,
+  id = ids.map,
+  num.fit = 3
+)
+
+# Fit Double Machine Learning
+dml_fit <- PLCE:::DML(Y, treat, X.all)
+
+# Fit the generalized random forest
+grf_fit <- grf::causal_forest(X.all, Y, treat)
+
+# Compare results, true marginal effect = 1.
+with(plce_fit,c(point,se))
+with(dml_fit, c(point,se))
+grf::average_treatment_effect(grf_fit)
+
 
 ```
 

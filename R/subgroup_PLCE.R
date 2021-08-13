@@ -4,7 +4,7 @@
 #'
 #'
 #' @importFrom coda mcmc as.mcmc
-#' @importFrom MASS ginv
+#' @importFrom MASS ginv mvrnorm
 #' @noRd
 #'
 #' @rdname sparsereg

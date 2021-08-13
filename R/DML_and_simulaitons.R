@@ -127,7 +127,6 @@ DML_predict <-
 #' Generate data used in simulations.
 #'
 #'
-#' @param Y Outcome vector.
 #' @importFrom MASS mvrnorm
 #' @noRd
 #'
@@ -136,7 +135,7 @@ DML_predict <-
 make.simdata <-
   function(n,
            k,
-           meahet = F,
+           meanhet = F,
            errhet = F,
            REs = T,
            inter = FALSE,
@@ -144,62 +143,61 @@ make.simdata <-
     # n <- 500; k <- 5; meahet=F; errhet=F; REs=T; inter=FALSE; rho=0.5
     
     ##Format data
-    var.mat   <- diag(k)
-    var.mat[var.mat == 0] <- 0.5
     
-    ids.map <- as.factor(sample(letters[1:20], n, T))
+    ##Format data ----
+    var.mat <- diag(k)
+    var.mat[var.mat==0] <- rho
+    # covariates
+    X <- MASS::mvrnorm(n, rep(0, k), Sig = var.mat)
+    X<-apply(X,2,scale)
+    X[,1]<-X[,1]/(mean(X[,1]^2)^.5)
+    X<-apply(X,2,FUN=function(x) x/(mean(x^2))^.5)
+    
+    
+    ## REs ----
+    ids.map<-sample(as.factor(letters[1:20]),n,T)
+    ids.map <- as.factor(ceiling(sort(X[,1],ind=T)$ix/20))
+    ids.map <- as.factor(ceiling(sort(rnorm(n),ind=T)$ix/20))
+    
     res.map <- rnorm(length(unique(ids.map)))
-    names(res.map) <- (unique(ids.map))
-    res.true <-  res.map[ids.map] * REs
+    names(res.map)<-sort(unique(ids.map))
+    res.true <-  (res.map[ids.map])*REs
+    X.REs<-model.matrix(~ids.map-1)
     
-    y <- res.true + rnorm(n)
-    
-    X <- mvrnorm(n, rep(0, k), Sig = var.mat)
-    X <- apply(X, 2, scale)
-    
-    X[, 1] <- X[, 1] / (mean(X[, 1] ^ 2) ^ .5)
-    X <- apply(
-      X,
-      2,
-      FUN = function(x)
-        x / (mean(x ^ 2)) ^ .5
-    )
-    if (errhet)
-      sd.use <-
-      ((1 + X[, 1] + (length(unique(
-        X[, 1]
-      )) == 2)) ^ 2 / 2) ^ .5
-    else
-      sd.use <- 1
-    errst <- rnorm(n, sd = sd.use)#rt(n,8)*sd.use#
-    treat <- (X[, 1]) + errst + res.true
-    errsy <- rnorm(n, sd = 1)#rt(n,8)*sd.use#
-    if (meanhet)
-      Y <-
-      1 + treat * (X[, 1] ^ 2) + errsy + res.true
-    else
-      Y <- 1 + treat + (X[, 1] ^ 2) + errsy + res.true
+    if(errhet)	sd.use<-((1+X[,1]+(length(unique(X[,1]))==2) )^2/2)^.5 else sd.use<-1
+    errst<-rnorm(n,sd=sd.use)#rt(n,8)*sd.use#
+    treat<-(X[,1])+errst+res.true
+    errsy<-rnorm(n,sd=1)#rt(n,8)*sd.use#
+    if(meanhet) Y<-1+treat*(X[,1]^2)+errsy else Y<-1+treat+(X[,1]^2)+errsy
+    Y <- Y - res.true
     ##Shift X
-    if (inter) {
-      m1 <- exp(-10 * (outer(X[, 1], X[, 1], "-") ^ 2))
-      diag(m1) <- 0
-      oY <- m1 %*% X[, 1] / rowSums(m1)
-      oT <- m1 %*% X[, 1] / rowSums(m1)
+    if(inter){
+      m1<-exp(-5*(outer(X[,1],X[,1],"-")^2))
+      diag(m1)<-0
+      oY<-m1%*%X[,1]^2/rowSums(m1)
+      oT<-m1%*%X[,1]^2/rowSums(m1)
       
-      Y <- Y + oY
-      treat <- treat - oT
+      oY<-m1%*%(treat)/rowSums(m1)
+      oT<-m1%*%(X[,1]^2)/rowSums(m1)
+      
+      
+      Y<-Y+.5*oY
+      treat<-treat+.5*oT
     }
+    lm(Y~treat+X)
     
-    X2.model <- X
-    X2.model[, 1] <- X[, 1] + .5 * X[, 2]
-    X2.model[, 2] <- X[, 2] + .5 * X[, 1]
+    X2.model<-X
+    X2.model[,1]<-X[,1]-.5*X[,2]
+    X2.model[,2]<-X[,2]-.5*X[,1]
     ## Rotates X's
-    X <- X2.model
+    X<-X2.model
+    colnames(X)<-paste("X",1:ncol(X),sep="_")
     
     output <- list(
       "Y" = Y,
       "treat" = treat,
       "X" = X,
+      "X.all" = cbind(X, X.REs),
       "ids.map" = ids.map
     )
     return(output)
