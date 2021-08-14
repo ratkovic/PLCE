@@ -8,7 +8,5 @@
 #' @useDynLib PLCE
 #' @importFrom Rcpp sourceCpp
 #' @import stats
-#' @import graphics abline axis lines mtext par rect
-#' @import grDevices hcl
 ## usethis namespace: end
 NULL

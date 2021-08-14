@@ -6,6 +6,9 @@
 #' @export
 #'
 #'
+#' @importFrom graphics abline axis lines mtext par rect
+#' @importFrom grDevices hcl
+#'
 #' @return \describe{
 #' \item{diff}{The estimated excess kurtosis per datum.}
 #'}
