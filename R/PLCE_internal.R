@@ -19,7 +19,6 @@ makebases <-
     #Xt<-lapply(data.frame(Xr[,expand]),make.spline,name.var="z",degree=c(3,5))
     #Xt<-matrix(unlist(Xt),nr=nrow(X))
     #Xt<-cbind(X,Xt)
-    tic()
     Xt <- NULL
     for (i in 1:ncol(X)) {
       Xt <- cbind(Xt, bs.me(X[, i]))
@@ -968,10 +967,8 @@ allbases <- function(y,
   ## Make interference bases ----
   X.interfy <- X.interft <- NULL
   if (fit.interference) {
-    tictoc::tic()
     X.interfy <- generate.Xinterf(res1.y, X, treat, replaceme)
     X.interft <- generate.Xinterf(res1.2, X, NULL, replaceme)
-    print(tictoc::toc())
   }
   
   ## Generate splits ----
