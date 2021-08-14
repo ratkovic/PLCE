@@ -37,7 +37,4 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
-
-# Dropbox Variables
-.DS*
 .DS_Store

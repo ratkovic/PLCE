@@ -19,6 +19,7 @@ makebases <-
     #Xt<-lapply(data.frame(Xr[,expand]),make.spline,name.var="z",degree=c(3,5))
     #Xt<-matrix(unlist(Xt),nr=nrow(X))
     #Xt<-cbind(X,Xt)
+    tic()
     Xt <- NULL
     for (i in 1:ncol(X)) {
       Xt <- cbind(Xt, bs.me(X[, i]))
@@ -42,6 +43,7 @@ makebases <-
                X = Xt[sample.cor, ],
                inter.schedule,
                1:length(sample.cor))$cors
+
     ## Sure screen ----
     n <- length(treat)
     if (length(SIS.use) == 0) {
@@ -522,15 +524,17 @@ scale2 <- function(z) {
 
 
 bs.me <- function(x, degree = 5) {
-  n <- length(x)
-  x <- (rank(x) - 1) / (n)
-  x <- 2 * x - 1
-  basis.out <- NULL
-  for (i.basis in 1:degree) {
-    # basis.out<-cbind(basis.out,cos(i.basis*acos(x)),cos(-i.basis*acos(x)))
-  }
+  # n <- length(x)
+  # x <- (rank(x) - 1) / (n)
+  # x <- 2 * x - 1
+  # basis.out <- NULL
+  # for (i.basis in 1:degree) {
+  #   # basis.out<-cbind(basis.out,cos(i.basis*acos(x)),cos(-i.basis*acos(x)))
+  # }
+  x<-x-mean(x)
+  b1<-bs(x, degree = 3, knots = median(x))
   basis.out <-
-    cbind(x, bs(x, degree = 3, knots = median(x)), bs(-x, degree = 3, knots = median(x)))
+    cbind(x, b1, bs(-x, degree = 3, knots = median(x))[,ncol(b1)])
   basis.out[, check.cor(basis.out, 0.0001)$k]
   
 }
@@ -867,7 +871,6 @@ allbases <- function(y,
   ## Make bases for outcome, treatment----
   #cat("#####  Step 1: Constructing conditional mean bases\n")
   
-  
   basest0 <- generate.bases(treat.b, treat, X, X, id = NULL, replaceme)
   basest0 <- apply(basest0, 2, scale2)
   treat.b.2 <-
@@ -965,8 +968,10 @@ allbases <- function(y,
   ## Make interference bases ----
   X.interfy <- X.interft <- NULL
   if (fit.interference) {
+    tictoc::tic()
     X.interfy <- generate.Xinterf(res1.y, X, treat, replaceme)
     X.interft <- generate.Xinterf(res1.2, X, NULL, replaceme)
+    print(tictoc::toc())
   }
   
   ## Generate splits ----
