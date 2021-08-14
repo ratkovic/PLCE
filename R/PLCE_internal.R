@@ -181,7 +181,7 @@ hl.mean <- function(x) {
 trimbases.boot <-
   function(y,
            basesy0,
-           trimboot.num = 10,
+           trimboot.num = 5,
            wts.use = NULL,
            id = NULL,
            replaceme) {
@@ -194,20 +194,19 @@ trimbases.boot <-
     basesy0int <- cbind(1, basesy0)
     beta.init <- NULL
     
-    
-    XpX <-
-      crossprod(basesy0int) + sd_cpp2(y) ^ 2 * diag(ncol(basesy0int))
-    Xpy <- crossprod(basesy0int, y)
-    beta.init <- solve_cpp(XpX, Xpy)$beta
+  
     
     indsamp <- which(replaceme > 4)
     numsamp <- length(indsamp)
     numsamp <- min(numsamp, 1000)
-    sy0 <-
-      sparsereg_GCV(y,
-                    basesy0)
-    trimboot.num <- rcppClamp(max(ceiling(sy0$dof), 2) * 5, 10, 50)
     
+    sy0 <-
+     sparsereg_GCV(y,
+                    basesy0)
+
+    # trimboot.num <- rcppClamp(max(ceiling(sy0$dof), 2) * 5, 10, 50)
+    coefsy.samp <- matrix(NA, nrow=trimboot.num+1, ncol=length(sy0$coef))
+    coefsy.samp[1, ] <-abs(sy0$coef)
     for (i.samp in 1:trimboot.num) {
       #samp.curr <- which(sample(1:3, n, T) == 1)
       
@@ -219,19 +218,15 @@ trimbases.boot <-
       sy0 <-
         sparsereg_GCV(y[samp.curr],
                       basesy0.boot)
-      # ,
-      #             weights = wts.use[samp.curr],
-      #             beta.init = beta.init,
-      #             sparseregweights = TRUE
-      #   )
-      coefsy.samp <- rbind(abs(sy0$coef), coefsy.samp)
-    }
+
+        coefsy.samp[i.samp+1, ] <- abs(sy0$coef)
+      }
     
     cutoff.sis <-
       mean(sapply(
         1:500,
         FUN = function(x)
-          max(abs(rnorm(trimboot.num))) / n ^ .5
+          max(abs(rnorm(trimboot.num+1))) / n ^ .5
       )) * 2
     SIS.keep.y <- apply(coefsy.samp, 2, max) > cutoff.sis
     basesy0 <- basesy0[, SIS.keep.y]
@@ -276,6 +271,7 @@ generate.bases <-
            id = NULL,
            replaceme,
            alwaysinter = NULL) {
+    tic("starting generate.bases")
     n <- length(y2.b)
     X <- basesy0
     if (length(id) > 0) {
@@ -289,8 +285,10 @@ generate.bases <-
       )
       y <- y2.b <- y2.b - sparsereg(y2.b, X.dum, id = NULL)$fit
     }
+    toc()
     #makebases <- function(treat, X, het, SIS.use = NULL, replaceme)
     ## Stage 1 SIS
+    tic("make bases stage 1")
     basesy0 <-
       suppressMessages(makebases(
         y2.b,
@@ -310,7 +308,7 @@ generate.bases <-
     basesy <- as.matrix(basesy[, keeps.try])
     basesy <- orthog.me(y, basesy)
     basesy <- apply(basesy, 2, scale2)
-    
+    toc()
     #wts1<-(t(basesy)%*%scale2(y))^2
     #basesy<-basesy[,sort(wts1,dec=T,ind=T)$ix]
     
@@ -323,7 +321,9 @@ generate.bases <-
     #
     # return(basesy[,cs1<0.9])
     
+    tic("trimbases.boot")
     basesy <- trimbases.boot(y, basesy, replaceme = replaceme)
+    toc()
     basesy <- cbind(X, basesy)
     basesy <- basesy[, check.cor(basesy, thresh = 1e-4)$k]
     basesy
@@ -869,7 +869,7 @@ allbases <- function(y,
   #generate.bases <- function(y2.b, y, basesy0, X, id=NULL, replaceme) {
   ## Make bases for outcome, treatment----
   #cat("#####  Step 1: Constructing conditional mean bases\n")
-  
+  tic("generate.bases")
   basest0 <- generate.bases(treat.b, treat, X, X, id = NULL, replaceme)
   basest0 <- apply(basest0, 2, scale2)
   treat.b.2 <-
@@ -895,10 +895,12 @@ allbases <- function(y,
   
   baset0 <- basest0[, check.cor(basest0)$k]
   basey0 <- basesy0[, check.cor(basesy0)$k]
+  toc()
   
+  tic("orthog.me generate bases")
   basest0 <- orthog.me(treat, basest0, weights.lm = 1 * (replaceme > 4))
   basesy0 <- orthog.me(y, basesy0, weights.lm = 1 * (replaceme > 4))
-  
+  toc()
   
   ## Initial outcome and propensity model ----
   sy <- sparsereg(y,
@@ -918,6 +920,7 @@ allbases <- function(y,
   res1.2 <- scale2(res1)
   
   if (fit.treatment.heteroskedasticity) {
+    tic("treatment hetero")
     basest2.0 <-
       generate.bases(res2.b,
                      res2.b,
@@ -957,6 +960,7 @@ allbases <- function(y,
     basest2.0 <- cleanNAs(basest2.0)
     basest2.0 <-
       orthog.me(res1.2, basest2.0, weights.lm = 1 * (replaceme > 4))
+    toc()
   }
   
   ## Split sample ----
@@ -967,8 +971,10 @@ allbases <- function(y,
   ## Make interference bases ----
   X.interfy <- X.interft <- NULL
   if (fit.interference) {
+    tic("interference bases")
     X.interfy <- generate.Xinterf(res1.y, X, treat, replaceme)
     X.interft <- generate.Xinterf(res1.2, X, NULL, replaceme)
+    toc()
   }
   
   ## Generate splits ----
