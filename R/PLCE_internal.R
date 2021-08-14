@@ -271,7 +271,7 @@ generate.bases <-
            id = NULL,
            replaceme,
            alwaysinter = NULL) {
-    tic("starting generate.bases")
+    # tic("starting generate.bases")
     n <- length(y2.b)
     X <- basesy0
     if (length(id) > 0) {
@@ -285,10 +285,10 @@ generate.bases <-
       )
       y <- y2.b <- y2.b - sparsereg(y2.b, X.dum, id = NULL)$fit
     }
-    toc()
+    # toc()
     #makebases <- function(treat, X, het, SIS.use = NULL, replaceme)
     ## Stage 1 SIS
-    tic("make bases stage 1")
+    # tic("make bases stage 1")
     basesy0 <-
       suppressMessages(makebases(
         y2.b,
@@ -308,7 +308,7 @@ generate.bases <-
     basesy <- as.matrix(basesy[, keeps.try])
     basesy <- orthog.me(y, basesy)
     basesy <- apply(basesy, 2, scale2)
-    toc()
+    # toc()
     #wts1<-(t(basesy)%*%scale2(y))^2
     #basesy<-basesy[,sort(wts1,dec=T,ind=T)$ix]
     
@@ -321,9 +321,9 @@ generate.bases <-
     #
     # return(basesy[,cs1<0.9])
     
-    tic("trimbases.boot")
+    # tic("trimbases.boot")
     basesy <- trimbases.boot(y, basesy, replaceme = replaceme)
-    toc()
+    # toc()
     basesy <- cbind(X, basesy)
     basesy <- basesy[, check.cor(basesy, thresh = 1e-4)$k]
     basesy
@@ -869,7 +869,7 @@ allbases <- function(y,
   #generate.bases <- function(y2.b, y, basesy0, X, id=NULL, replaceme) {
   ## Make bases for outcome, treatment----
   #cat("#####  Step 1: Constructing conditional mean bases\n")
-  tic("generate.bases")
+  # tic("generate.bases")
   basest0 <- generate.bases(treat.b, treat, X, X, id = NULL, replaceme)
   basest0 <- apply(basest0, 2, scale2)
   treat.b.2 <-
@@ -895,12 +895,12 @@ allbases <- function(y,
   
   baset0 <- basest0[, check.cor(basest0)$k]
   basey0 <- basesy0[, check.cor(basesy0)$k]
-  toc()
+  # toc()
   
-  tic("orthog.me generate bases")
+  # tic("orthog.me generate bases")
   basest0 <- orthog.me(treat, basest0, weights.lm = 1 * (replaceme > 4))
   basesy0 <- orthog.me(y, basesy0, weights.lm = 1 * (replaceme > 4))
-  toc()
+  # toc()
   
   ## Initial outcome and propensity model ----
   sy <- sparsereg(y,
@@ -920,7 +920,7 @@ allbases <- function(y,
   res1.2 <- scale2(res1)
   
   if (fit.treatment.heteroskedasticity) {
-    tic("treatment hetero")
+    # tic("treatment hetero")
     basest2.0 <-
       generate.bases(res2.b,
                      res2.b,
@@ -960,7 +960,7 @@ allbases <- function(y,
     basest2.0 <- cleanNAs(basest2.0)
     basest2.0 <-
       orthog.me(res1.2, basest2.0, weights.lm = 1 * (replaceme > 4))
-    toc()
+    # toc()
   }
   
   ## Split sample ----
@@ -971,10 +971,10 @@ allbases <- function(y,
   ## Make interference bases ----
   X.interfy <- X.interft <- NULL
   if (fit.interference) {
-    tic("interference bases")
+    # tic("interference bases")
     X.interfy <- generate.Xinterf(res1.y, X, treat, replaceme)
     X.interft <- generate.Xinterf(res1.2, X, NULL, replaceme)
-    toc()
+    # toc()
   }
   
   ## Generate splits ----
