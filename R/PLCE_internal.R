@@ -178,6 +178,7 @@ hl.mean <- function(x) {
   median_cpp(c(diff1, x))
 }
 
+#' @importFrom glmnet cv.glmnet
 trimbases.boot <-
   function(y,
            basesy0,
@@ -185,6 +186,12 @@ trimbases.boot <-
            wts.use = NULL,
            id = NULL,
            replaceme) {
+    
+    glmnet1 <- cv.glmnet(as.matrix(basesy0)[replaceme>4,],y[replaceme>4])
+    keeps <- which(coef(glmnet1)[-1]!=0)
+    if(length(keeps)==0) keeps <- 1:3
+    return(basesy0[,keeps])
+    
     n <- length(y)
     if (length(wts.use) == 0)
       wts.use <- rep(1, n)
@@ -721,6 +728,9 @@ check.cor <- function(X, thresh = 0, nruns = 2) {
 ### GCV for sparsereg
 
 sparsereg_GCV <- function(y0, X0, id0 = NULL, usecpp = TRUE) {
+  model.out <- sparsereg(y = y0, X = X0, id = id0)
+  return(model.out)
+  
   n <- length(y0)
   p <- ncol(X0)
   if (ncol(as.matrix(X0)) < 3) {
