@@ -881,16 +881,25 @@ allbases <- function(y,
   #cat("#####  Step 1: Constructing conditional mean bases\n")
   # tic("generate.bases")
   basest0 <- generate.bases(treat.b, treat, X, X, id = NULL, replaceme)
-  sds.t <- apply(basest0[replaceme>4,],2,sd)
+  sds.t56 <- apply(basest0[replaceme>4,],2,sd)
+  sds.t34 <- apply(basest0[replaceme%in%c(3,4),],2,sd)
+  sds.t12 <- apply(basest0[replaceme%in%c(1,2),],2,sd)
+  sds.t <- sds.t56*sds.t34*sds.t12
   basest0 <- as.matrix(basest0[,sds.t>0])
   colnames(basest0) <- paste("X",1:ncol(basest0),sep="_")
   basest0 <- apply(basest0, 2, scale2)
   treat.b.2 <-
-    treat.b - basest0 %*% PLCE:::sparsereg_GCV(treat.b[replaceme > 4], basest0[replaceme > 4, ])$coef
+    treat.b - basest0 %*% sparsereg_GCV(treat.b[replaceme > 4], basest0[replaceme > 4, ])$coef
   basest0 <- cleanNAs(basest0)
   
   basesy0 <-
     generate.bases(y2.b, y2.b, cbind(X), cbind(X), id = NULL, replaceme)
+  sds.y56 <- apply(basesy0[replaceme>4,],2,sd)
+  sds.y34 <- apply(basesy0[replaceme%in%c(3,4),],2,sd)
+  sds.y12 <- apply(basesy0[replaceme%in%c(1,2),],2,sd)
+  sds.y <- sds.y56*sds.y34*sds.y12
+  basesy0 <- as.matrix(basesy0[,sds.y>0])
+  
   y2.b.2 <- y2.b - sparsereg(y2.b, basesy0,   id = NULL)$fitted
   #basesy0.2 <- generate.bases(y2.b.2, y2.b.2, cbind(X), cbind(X),id=NULL, replaceme) ## Don't need REs--already partialed out!
   #basesy0<-cbind(basesy0,basesy0.2)

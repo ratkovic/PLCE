@@ -7,11 +7,11 @@
 #' A machine learning method is used to adjust not just for the covariates but also
 #' nonlinear, interactive functions of the covariates.
 #' @param id A vector with elements denoting groupings to fit via random effects.
-#' @param num.fit The number of cross-fitting iterations to run.  Default is 25.
+#' @param num.fit The number of cross-fitting iterations to run.  Default is 10.
 #' @param var.type The type of variance estimate, passed to \code{vcovHC} in sandwich. Options are
 #' \code{HC0}, \code{HC1}, \code{HC2}, \code{HC3}, with \code{HC3} the default.
 #' @param sens Whether to fit the sensitivity analysis using \code{sensemakr}.
-#' @param printevery How frequently to print output during estimation.  Default is 10.
+#' @param printevery How frequently to print output during estimation.  Default is 5.
 #' @param fit.interference Whether to adjust for interference.  Default is \code{TRUE}.
 #' @param fit.treatment.heteroskedasticity Whether to adjust for bias induced through
 #' heteroskedasticity in the treatment variable.  Default is \code{TRUE}.
@@ -88,10 +88,10 @@ plce <-
            treat,
            X,
            id = NULL,
-           num.fit = 25,
+           num.fit = 10,
            var.type = "HC3",
            sens = TRUE,
-           printevery = 10,
+           printevery = 5,
            fit.interference = TRUE,
            fit.treatment.heteroskedasticity = TRUE) {
     n <- length(y)
@@ -191,6 +191,14 @@ plce <-
       #if(length(id)>0) id.temp <- id[replaceme>4]
       ## Propensity model for interference, heteroskedasticity estimated off splits 5-6 ----
       colnames(basest) <- paste("X", 1:ncol(basest), sep = "_")
+      
+
+      basest <- basest[ , apply(basest[replaceme > 4,], 2, sd)>0]
+      
+      # m1 <- mget(ls())
+      # save(m1, file="diagnose.Rda")
+      
+      
       st <-
         sparsereg_GCV(treat[replaceme > 4], X0 = basest[replaceme > 4,], id0 = id.temp)
       fits.all <-
@@ -200,8 +208,6 @@ plce <-
           fits.all + as.vector(st$REs[id])#X.REs[,names(st$REs)]%*%st$REs
       }
       fits <- fits.all[replaceme < 5]
-      # m1<-mget(ls())
-      # save(m1,file="diagnose.Rda")
       res <- as.vector(scale2(treat[replaceme < 5] - fits))
       
       ## Outcome model for interference estimated off splits 5-6 ----
@@ -255,9 +261,6 @@ plce <-
       id.temp <- NULL
       if (length(id) > 0)
         id.temp <- id[replaceme < 5]
-      
-      # m1<-mget(ls())
-      # save(m1,file="diagnose.Rda")
       
       ## Bases to be passed to selection and estimation set ----
       if (fit.treatment.heteroskedasticity) {
