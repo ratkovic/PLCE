@@ -132,6 +132,8 @@ plce <-
       
     }
     
+
+    
     y2.b <- y
     treat.y <- treat.b <- treat
     
@@ -162,7 +164,7 @@ plce <-
     for (i.hoe in 1:num.fit) {
       ## Create matrices for fitting ----
       replaceme <- make.replaceme(y, id)
-      allbases.obj <-
+     allbases.obj <-
         allbases(
           y,
           y2.b,
