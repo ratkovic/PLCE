@@ -7,7 +7,7 @@ Author: Marc Ratkovic <ratkovic@princeton.edu> [aut, cre]
 Maintainer: Marc Ratkovic <ratkovic@princeton.edu>
 Description: The marginal effect is the average effect of a one-unit move of a treatment variable on an outcome, after adjusting for background covariates.  The method works by combining machine learning to adjust for both the covariates as well as any nonlinear, interactive functions of the covariates.  It also handles random effects and allows for valid inference in the presence if covariate-driven interference.
 License: GPL (>= 2)
-Imports: Rcpp (>= 1.0.5), splines, MASS, sandwich, sensemakr, splines2, RcppEigen, ccaPP, coda, lme4, randomForest, AER, grDevices, graphics
+Imports: Rcpp (>= 1.0.5), splines, MASS, sandwich, sensemakr, splines2, RcppEigen, ccaPP, coda, lme4, randomForest, AER, grDevices, graphics, glmnet
 Depends: R (>= 3.5.0)
 Encoding: UTF-8
 LinkingTo: Rcpp, RcppArmadillo

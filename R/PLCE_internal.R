@@ -178,6 +178,7 @@ hl.mean <- function(x) {
   median_cpp(c(diff1, x))
 }
 
+#' @importFrom glmnet cv.glmnet
 trimbases.boot <-
   function(y,
            basesy0,
@@ -185,6 +186,12 @@ trimbases.boot <-
            wts.use = NULL,
            id = NULL,
            replaceme) {
+    
+    glmnet1 <- glmnet:::cv.glmnet(as.matrix(basesy0),y)
+    keeps <- which(coef(glmnet1)[-1]!=0)
+    if(length(keeps)==0) keeps <- 1:3
+    return(basesy0[,keeps])
+    
     n <- length(y)
     if (length(wts.use) == 0)
       wts.use <- rep(1, n)
