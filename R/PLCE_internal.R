@@ -187,7 +187,7 @@ trimbases.boot <-
            id = NULL,
            replaceme) {
     
-    glmnet1 <- glmnet:::cv.glmnet(as.matrix(basesy0),y)
+    glmnet1 <- cv.glmnet(as.matrix(basesy0),y)
     keeps <- which(coef(glmnet1)[-1]!=0)
     if(length(keeps)==0) keeps <- 1:3
     return(basesy0[,keeps])
