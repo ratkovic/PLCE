@@ -511,6 +511,10 @@ makebases.interf <- function(X.interfy, resy, replaceme) {
         )$basis
     }
   }
+  
+  #m1 <- mget(ls())
+  #save(m1,file="diagnose.Rda")
+  X.resy <- X.resy[,which(apply(X.resy,2,sd)>0)]
   X.resy <-
     cbind(lm(resy ~ X.resy, weights = 1 * (replaceme %in% c(3, 4)))$fit, X.resy)
   orthog.me(resy, X.resy, weights.lm = 1 * (replaceme %in% c(3, 4)))
@@ -861,6 +865,7 @@ make.soe <-
     mat.orthog2[weights.est == 0, keeps]
   }
 
+#' @importFrom ranger ranger
 
 allbases <- function(y,
                      y2.b,
@@ -992,7 +997,10 @@ allbases <- function(y,
   X.interfy <- X.interft <- NULL
   if (fit.interference) {
     # tic("interference bases")
-    X.interfy <- generate.Xinterf(res1.y, X, treat, replaceme)
+    model.df <- data.frame(treat,X)[replaceme>4,]
+    pscore.model <- ranger(treat~.,data=model.df )
+    pscore.est <- predict(pscore.model, data=data.frame(X))$predictions
+    X.interfy <- generate.Xinterf(res1.y, cbind(pscore.est, X), treat, replaceme)
     X.interft <- generate.Xinterf(res1.2, X, NULL, replaceme)
     # toc()
   }
