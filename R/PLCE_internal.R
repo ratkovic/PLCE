@@ -877,6 +877,7 @@ allbases <- function(y,
                      replaceme,
                      fit.interference,
                      fit.treatment.heteroskedasticity,
+                     pscore.est,
                      inter.schedule.obj = NULL) {
   n <- length(y)
   replaceme <- make.replaceme(y, id)
@@ -898,7 +899,7 @@ allbases <- function(y,
   basest0 <- cleanNAs(basest0)
   
   basesy0 <-
-    generate.bases(y2.b, y2.b, cbind(X), cbind(X), id = NULL, replaceme)
+    generate.bases(y2.b, y2.b, cbind(pscore.est,X), cbind(pscore.est,X), id = NULL, replaceme)
   sds.y56 <- apply(basesy0[replaceme>4,],2,sd)
   sds.y34 <- apply(basesy0[replaceme%in%c(3,4),],2,sd)
   sds.y12 <- apply(basesy0[replaceme%in%c(1,2),],2,sd)
@@ -949,8 +950,8 @@ allbases <- function(y,
     basest2.0 <-
       generate.bases(res2.b,
                      res2.b,
-                     X,
-                     X,
+                     cbind(pscore.est,X),
+                     cbind(pscore.est,X),
                      id = NULL,
                      replaceme,
                      alwaysinter = res2.b)
@@ -1001,7 +1002,8 @@ allbases <- function(y,
     # pscore.model <- ranger(treat~.,data=model.df )
     # pscore.est <- predict(pscore.model, data=data.frame(X))$predictions
     # X.interfy <- generate.Xinterf(res1.y, cbind(pscore.est, X), treat, replaceme)
-    X.interfy <- generate.Xinterf(res1.y, cbind(X), treat, replaceme)
+    X.interfy <- generate.Xinterf(res1.y, cbind(pscore.est, X), treat, replaceme)
+    
     X.interft <- generate.Xinterf(res1.2, X, NULL, replaceme)
     # toc()
   }

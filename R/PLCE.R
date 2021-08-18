@@ -181,7 +181,8 @@ plce <-
           id,
           replaceme,
           fit.interference,
-          fit.treatment.heteroskedasticity
+          fit.treatment.heteroskedasticity,
+          pscore.est
         )
       
       basest <- basest0 <- allbases.obj$basest0
