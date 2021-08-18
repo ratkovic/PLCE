@@ -997,10 +997,11 @@ allbases <- function(y,
   X.interfy <- X.interft <- NULL
   if (fit.interference) {
     # tic("interference bases")
-    model.df <- data.frame(treat,X)[replaceme>4,]
-    pscore.model <- ranger(treat~.,data=model.df )
-    pscore.est <- predict(pscore.model, data=data.frame(X))$predictions
-    X.interfy <- generate.Xinterf(res1.y, cbind(pscore.est, X), treat, replaceme)
+    # model.df <- data.frame(treat,X)[replaceme>4,]
+    # pscore.model <- ranger(treat~.,data=model.df )
+    # pscore.est <- predict(pscore.model, data=data.frame(X))$predictions
+    # X.interfy <- generate.Xinterf(res1.y, cbind(pscore.est, X), treat, replaceme)
+    X.interfy <- generate.Xinterf(res1.y, cbind(X), treat, replaceme)
     X.interft <- generate.Xinterf(res1.2, X, NULL, replaceme)
     # toc()
   }

@@ -161,9 +161,15 @@ plce <-
     # }
     cat("#####  Beginning cross-fitting for the marginal effect\n")
     
+    X0 <- X
+    
     for (i.hoe in 1:num.fit) {
       ## Create matrices for fitting ----
       replaceme <- make.replaceme(y, id)
+      model.df <- data.frame(treat,X0)[replaceme>4,]
+      pscore.model <- ranger(treat~.,data=model.df )
+      pscore.est <- predict(pscore.model, data=data.frame(X0))$predictions
+      X <- cbind(scale2(rank(pscore.est)), X0)
      allbases.obj <-
         allbases(
           y,
