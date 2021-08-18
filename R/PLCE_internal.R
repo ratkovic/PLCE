@@ -29,7 +29,7 @@ makebases <-
     inter.schedule <- cbind(rep(1:nt, each = nt),
                             rep(1:nt, by = nt))
     inter.schedule <-
-      inter.schedule[inter.schedule[, 1] > inter.schedule[, 2], ]
+      inter.schedule[inter.schedule[, 1] >= inter.schedule[, 2], ]
     sample.cor <- 1:length(treat)
     sample.cor <- which(replaceme > 4)
     if (length(sample.cor) > 1000) {
@@ -489,7 +489,7 @@ makebases.interf <- function(X.interfy, resy, replaceme) {
       opt.y <-
         optimize(
           cor1,
-          interval = c(-2, 2) + rot.est,
+          interval = c(-4, 4),# + rot.est,
           resy = resy[replaceme.temp != 0],
           res1.2 = X.interfy$Xvars[replaceme.temp != 0, i.interf],
           x = X.interfy$Xmatvars[replaceme.temp != 0 , i.interf],
@@ -512,11 +512,10 @@ makebases.interf <- function(X.interfy, resy, replaceme) {
     }
   }
   
-  #m1 <- mget(ls())
-  #save(m1,file="diagnose.Rda")
   X.resy <- X.resy[,which(apply(X.resy,2,sd)>0)]
   X.resy <-
     cbind(lm(resy ~ X.resy, weights = 1 * (replaceme %in% c(3, 4)))$fit, X.resy)
+  
   orthog.me(resy, X.resy, weights.lm = 1 * (replaceme %in% c(3, 4)))
 }
 
@@ -539,12 +538,12 @@ bs.me <- function(x, degree = 5) {
   # x <- 2 * x - 1
   # basis.out <- NULL
   # for (i.basis in 1:degree) {
-  #   # basis.out<-cbind(basis.out,cos(i.basis*acos(x)),cos(-i.basis*acos(x)))
+  #    basis.out<-cbind(basis.out,cos(i.basis*acos(x)),cos(-i.basis*acos(x)))
   # }
   x<-x-mean(x)
   b1<-bs(x, degree = 3, knots = median(x))
   basis.out <-
-    cbind(x, b1, bs(-x, degree = 3, knots = median(x))[,ncol(b1)])
+    cbind(1,x, b1, bs(-x, degree = 3, knots = median(x))[,ncol(b1)])
   basis.out[, check.cor(basis.out, 0.0001)$k]
   
 }
