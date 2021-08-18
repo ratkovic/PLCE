@@ -170,7 +170,7 @@ plce <-
       # pscore.model <- ranger(treat~.,data=model.df )
       # pscore.est <- predict(pscore.model, data=data.frame(X0))$predictions
       # X <- cbind(scale2(rank(pscore.est)), X0)
-      pscore.est <- NULL
+      # pscore.est <- NULL
       X <- X0
      allbases.obj <-
         allbases(
