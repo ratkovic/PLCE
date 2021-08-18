@@ -166,10 +166,12 @@ plce <-
     for (i.hoe in 1:num.fit) {
       ## Create matrices for fitting ----
       replaceme <- make.replaceme(y, id)
-      model.df <- data.frame(treat,X0)[replaceme>4,]
-      pscore.model <- ranger(treat~.,data=model.df )
-      pscore.est <- predict(pscore.model, data=data.frame(X0))$predictions
-      X <- cbind(scale2(rank(pscore.est)), X0)
+      # model.df <- data.frame(treat,X0)[replaceme>4,]
+      # pscore.model <- ranger(treat~.,data=model.df )
+      # pscore.est <- predict(pscore.model, data=data.frame(X0))$predictions
+      # X <- cbind(scale2(rank(pscore.est)), X0)
+      pscore.est <- NULL
+      X <- X0
      allbases.obj <-
         allbases(
           y,
@@ -522,7 +524,7 @@ hoe.inner <-
       
       if (length(id) > 0) {
         id.2 <- id[replaceme > 2]
-        y2 <- lm(y0[replaceme > 2] ~ Xmat.adjust)$res
+        y2 <- lm(y0[replaceme > 2] ~ I(treat0[replaceme > 2])+ Xmat.adjust)$res
         treat2 <- lm(treat0[replaceme > 2] ~ Xmat.adjust)$res
         res.y.temp <- suppressMessages(predict(lmer(y2 ~ (1 | id.2))))
         res.t.temp <-
