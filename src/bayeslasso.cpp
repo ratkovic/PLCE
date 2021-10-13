@@ -99,7 +99,9 @@ Rcpp::List bayesLasso(arma::vec y,
         }//close out while loop
         arma::uvec update_ind = arma::find(arma::abs(beta) > 0.0001*sdy );
         edf = arma::trace(XpX.submat(update_ind,update_ind)*arma::pinv(XpXsolve.submat(update_ind,update_ind)));
-        GCV = sum((y-fits)%(y-fits))/((n-log(n)/2*edf)*(n-log(n)/2*edf));
+        //GCV = sum((y-fits)%(y-fits))/((n-log(n)/2*edf)*(n-log(n)/2*edf));
+        GCV = sum((y-fits)%(y-fits))/((n-edf)*(n-edf));
+        
     }// Close out i_outer
     
     return Rcpp::List::create(
