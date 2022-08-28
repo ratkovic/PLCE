@@ -11,4 +11,4 @@ Imports: Rcpp (>= 1.0.5), splines, MASS, sandwich, sensemakr, splines2, RcppEige
 Depends: R (>= 3.5.0)
 Encoding: UTF-8
 LinkingTo: Rcpp, RcppArmadillo
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
