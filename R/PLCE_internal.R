@@ -591,18 +591,8 @@ bs.me_mdei <- function(x, varname = "X") {
 
 
 bs.me <- function(x, degree = 5) {
-  # n <- length(x)
   # x <- (rank(x) - 1) / (n)
-  # x <- 2 * x - 1
-  # basis.out <- NULL
-  # for (i.basis in 1:degree) {
-  #   # basis.out<-cbind(basis.out,cos(i.basis*acos(x)),cos(-i.basis*acos(x)))
-  # }
-  # x<-x-mean(x)
   x<-scale(x)
-  # b1<-bs(x, degree = 3, knots = median(x))
-  # basis.out <-
-  #   cbind(x, b1, bs(-x, degree = 3, knots = median(x))[,ncol(b1)])
   basis.out <-
     cbind(x, bSpline2(x, degree=3, knots=0))#, bSpline2(x, degree=5, knots=0))
   basis.out <- basis.out[, check.cor(basis.out, 0.0001)$k]
