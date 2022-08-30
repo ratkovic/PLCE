@@ -591,7 +591,6 @@ bs.me_mdei <- function(x, varname = "X") {
 
 
 bs.me <- function(x, degree = 5) {
-  # x <- (rank(x) - 1) / (n)
   x<-scale(x)
   basis.out <-
     cbind(x, bSpline2(x, degree=3, knots=0))#, bSpline2(x, degree=5, knots=0))
