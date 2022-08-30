@@ -3,15 +3,15 @@
 #' @param y Vector of the dependent, or outcome variable.
 #' @param treat Treatment variable, for which the marginal effect is desired.
 #' May be continous, binary, or count.
-#' @param X Matrix of covariates to be adjusted for in estimating the marginal effect. 
+#' @param X Matrix of covariates to be adjusted for in estimating the marginal effect.
 #' A machine learning method is used to adjust not just for the covariates but also
 #' nonlinear, interactive functions of the covariates.
 #' @param id A vector with elements denoting groupings to fit via random effects.
-#' @param num.fit The number of cross-fitting iterations to run.  Default is 10.
+#' @param num.fit The number of cross-fitting iterations to run.  Default is 25.
 #' @param var.type The type of variance estimate, passed to \code{vcovHC} in sandwich. Options are
 #' \code{HC0}, \code{HC1}, \code{HC2}, \code{HC3}, with \code{HC3} the default.
 #' @param sens Whether to fit the sensitivity analysis using \code{sensemakr}.
-#' @param printevery How frequently to print output during estimation.  Default is 5.
+#' @param printevery How frequently to print output during estimation.  Default is 10.
 #' @param fit.interference Whether to adjust for interference.  Default is \code{TRUE}.
 #' @param fit.treatment.heteroskedasticity Whether to adjust for bias induced through
 #' heteroskedasticity in the treatment variable.  Default is \code{TRUE}.
@@ -36,7 +36,7 @@
 #' @importFrom splines bs
 #' @importFrom sandwich vcovHC
 #' @importFrom sensemakr sensemakr
-#' @importFrom splines2 bSpline
+#' @importFrom splines2 bSpline ibs
 #' @importFrom RcppEigen fastLm
 #' @importFrom ccaPP corSpearman
 #' @importFrom ccaPP corPearson
@@ -49,21 +49,21 @@
 #' set.seed(1234)
 #' n <- 1000
 #' p <- 5
-#' 
+#'
 #' ## Generate covariate matrix
 #' X <- matrix(rnorm(n * p), nrow = n, ncol = p)
 #' X<- apply(X,2,scale)
-#' 
+#'
 #' ## Generate random effects
 #' ids.map <- sample(letters[1:10], n, TRUE)
 #' res.map <- rnorm(10)
 #' names(res.map) <- letters[1:10]
 #' res.true <-  (res.map[ids.map])
-#' 
+#'
 #' ## Generate the treatment and outcome
 #' treat <- (X[, 1]) +  res.true + rnorm(n)
 #' Y <- 1 + treat * (X[, 1] ^ 2) + res.true + rnorm(n)
-#' 
+#'
 #' ## Fit the PLCE model
 #' plce1 <-
 #' plce(
@@ -73,7 +73,7 @@
 #'  printevery = 1,
 #'  num.fit = 5
 #'   )
-#' 
+#'
 #' ## Results: Point estimate, standard error,
 #' ##   sensitivity analysis
 #' plce1$point
@@ -88,10 +88,10 @@ plce <-
            treat,
            X,
            id = NULL,
-           num.fit = 10,
+           num.fit = 25,
            var.type = "HC3",
            sens = TRUE,
-           printevery = 5,
+           printevery = 10,
            fit.interference = TRUE,
            fit.treatment.heteroskedasticity = TRUE) {
     n <- length(y)
@@ -132,7 +132,7 @@ plce <-
       
     }
     
-
+    
     
     y2.b <- y
     treat.y <- treat.b <- treat
@@ -161,18 +161,10 @@ plce <-
     # }
     cat("#####  Beginning cross-fitting for the marginal effect\n")
     
-    X0 <- X
-    
     for (i.hoe in 1:num.fit) {
       ## Create matrices for fitting ----
       replaceme <- make.replaceme(y, id)
-      # model.df <- data.frame(treat,X0)[replaceme>4,]
-      # pscore.model <- ranger(treat~.,data=model.df )
-      # pscore.est <- predict(pscore.model, data=data.frame(X0))$predictions
-      # X <- cbind(scale2(rank(pscore.est)), X0)
-      pscore.est <- NULL
-      X <- X0
-     allbases.obj <-
+      allbases.obj <-
         allbases(
           y,
           y2.b,
@@ -183,13 +175,44 @@ plce <-
           id,
           replaceme,
           fit.interference,
-          fit.treatment.heteroskedasticity,
-          pscore.est
+          fit.treatment.heteroskedasticity
         )
       
-      basest <- basest0 <- allbases.obj$basest0
-      basesy <- basesy0 <- allbases.obj$basesy0
-      basest2 <- basest2.0 <- allbases.obj$basest2.0
+      basest <- basest0 <- as.matrix(allbases.obj$basest0)
+      basesy <- basesy0 <- as.matrix(allbases.obj$basesy0)
+      basest2 <- basest2.0 <- as.matrix(allbases.obj$basest2.0)
+      
+      # Strip out random warning due to all zero cov
+      colnames(basest) <- paste("X", 1:ncol(basest), sep = "_")
+      sds <-
+        apply(
+          basest,
+          2,
+          FUN = function(z)
+            min(tapply(z, replaceme, sd))
+        )
+      basest <- basest0 <- basest[, sds > 0]
+      
+      colnames(basesy) <- paste("X", 1:ncol(basesy), sep = "_")
+      sds <-
+        apply(
+          basesy,
+          2,
+          FUN = function(z)
+            min(tapply(z, replaceme, sd))
+        )
+      basesy <- basesy0 <- basesy[, sds > 0]
+      
+      colnames(basest2) <- paste("X", 1:ncol(basest2), sep = "_")
+      sds <-
+        apply(
+          basest2,
+          2,
+          FUN = function(z)
+            min(tapply(z, replaceme, sd))
+        )
+      basest2 <- basest2.0 <- basest2[, sds > 0]
+      
       X.interfy <- allbases.obj$X.interfy
       X.interft <- allbases.obj$X.interft
       replaceme <- allbases.obj$replaceme
@@ -199,17 +222,13 @@ plce <-
       id.temp <- NULL
       #if(length(id)>0) id.temp <- id[replaceme>4]
       ## Propensity model for interference, heteroskedasticity estimated off splits 5-6 ----
-      colnames(basest) <- paste("X", 1:ncol(basest), sep = "_")
       
-
-      basest <- basest[ , apply(basest[replaceme > 4,], 2, sd)>0]
-      
+      lastline <- 194
       # m1 <- mget(ls())
-      # save(m1, file="diagnose.Rda")
-      
-      
+      #save(m1, file = "diagnose.Rda")
+      #rm(m1)
       st <-
-        sparsereg_GCV(treat[replaceme > 4], X0 = basest[replaceme > 4,], id0 = id.temp)
+        sparsereg_GCV(treat[replaceme > 4], X0 = basest[replaceme > 4, ], id0 = id.temp)
       fits.all <-
         cbind(basest[, intersect(colnames(basest), names(st$coef))]) %*% st$coef[intersect(colnames(basest), names(st$coef))]
       if (length(id.temp) > 0) {
@@ -221,8 +240,12 @@ plce <-
       
       ## Outcome model for interference estimated off splits 5-6 ----
       colnames(basesy) <- paste("X", 1:ncol(basesy), sep = "_")
+      lastline <- 211
+      # m1 <- mget(ls())
+      #save(m1, file = "diagnose.Rda")
+      #rm(m1)
       sy <-
-        sparsereg_GCV(y[replaceme > 4], X0 = basesy[replaceme > 4,], id0 = id.temp)
+        sparsereg_GCV(y[replaceme > 4], X0 = basesy[replaceme > 4, ], id0 = id.temp)
       names.inter.y <- intersect(colnames(basesy), names(sy$coef))
       
       fits.y <-
@@ -241,10 +264,14 @@ plce <-
       colnames(basest2.0) <-
         paste("X", 1:ncol(basest2.0), sep = "_")
       
+      lastline <- 235
+      # m1 <- mget(ls())
+      #save(m1, file = "diagnose.Rda")
+      #rm(m1)
       ## No need for REs--already taken out.
       st.2 <-
         sparsereg_GCV(res1[replaceme > 4], apply(
-          basest2.0[replaceme > 4,],
+          basest2.0[replaceme > 4, ],
           2,
           FUN = function(z)
             scale2(z * scale2(res1[replaceme > 4]))
@@ -271,51 +298,59 @@ plce <-
       if (length(id) > 0)
         id.temp <- id[replaceme < 5]
       
+      
       ## Bases to be passed to selection and estimation set ----
       if (fit.treatment.heteroskedasticity) {
         bases.t.temp <-
-          cbind(basest[replaceme < 5,], res * basest2[replaceme < 5,])
+          cbind(basest[replaceme < 5, ], res * basest2[replaceme < 5, ])
       } else{
-        bases.t.temp <- basest[replaceme < 5,]
+        bases.t.temp <- basest[replaceme < 5, ]
       }
-      bases.y.temp <- basesy0[replaceme < 5,]
+      bases.y.temp <- basesy0[replaceme < 5, ]
       bases.t.temp <- cleanNAs(bases.t.temp)
       bases.y.temp <- cleanNAs(bases.y.temp)
       
       
       if (length(X.rest) > 0)
         X.rest.temp <-
-        as.matrix(X.rest)[replaceme < 5,]
+        as.matrix(X.rest)[replaceme < 5, ]
       else
         X.rest.temp <- NULL
       if (length(X.resy) > 0)
         X.resy.temp <-
-        as.matrix(X.resy)[replaceme < 5,]
+        as.matrix(X.resy)[replaceme < 5, ]
       else
         X.resy.temp <- NULL
-      
-      
-      h1 <-
-        hoe.inner(
-          y = y.temp,
-          treat = treat.temp,
-          y0 = y0.temp,
-          treat0 = treat0.temp,
-          basest = bases.t.temp,
-          basesy = bases.y.temp,
-          replaceme = replaceme.temp,
-          var.type,
-          lin.adj = NULL,
-          lin.adj.t = NULL,
-          sens = sens,
-          X.rest.temp,
-          X.resy.temp,
-          beta.t.init,
-          beta.y.init,
-          id = id.temp,
-          fit.interference,
-          fit.treatment.heteroskedasticity
+      h1 <- NA
+      while (is.na(unlist(h1)[1])) {
+        h1 <- tryCatch(
+          hoe.inner(
+            y = y.temp,
+            treat = treat.temp,
+            y0 = y0.temp,
+            treat0 = treat0.temp,
+            basest = bases.t.temp,
+            basesy = bases.y.temp,
+            replaceme = replaceme.temp,
+            var.type,
+            lin.adj = NULL,
+            lin.adj.t = NULL,
+            sens = sens,
+            X.rest.temp,
+            X.resy.temp,
+            beta.t.init,
+            beta.y.init,
+            id = id.temp,
+            fit.interference,
+            fit.treatment.heteroskedasticity
+          ),
+          error = function(e) {
+            print("error in hoe.inner!")
+            return(NA)
+          }
         )
+      }
+      #if(!is.na(h1)){
       points.run <- c(h1$point, points.run)
       se.run <- c(h1$se, se.run)
       sens.curr <- h1$sens
@@ -325,6 +360,7 @@ plce <-
       treatpoints.run <- c(h1$treat, treatpoints.run)
       treat.res.run[replaceme < 5, (2 * i.hoe - 1):(2 * i.hoe)] <-
         h1$treat.res
+      #}
       
       if (i.hoe %% printevery == 0 | i.hoe %in% c(1, num.fit)) {
         cat("##  Iteration ", i.hoe, "\n")
@@ -397,8 +433,10 @@ hoe.inner <-
     colnames(basesy.all) <-
       paste("X", 1:ncol(basesy.all), sep = "_")
     
-    basest.all <- basest.all[, check.cor(basest.all, thresh = 0.001)$k]
-    basesy.all <- basesy.all[, check.cor(basesy.all, thresh = 0.001)$k]
+    basest.all <-
+      basest.all[, check.cor(basest.all, thresh = 0.001)$k]
+    basesy.all <-
+      basesy.all[, check.cor(basesy.all, thresh = 0.001)$k]
     
     basest.all <- apply(basest.all, 2, scale2)
     basesy.all <- apply(basesy.all, 2, scale2)
@@ -414,6 +452,10 @@ hoe.inner <-
         FUN = function(z)
           fastLm(z ~ cbind(1, y))$res
       )
+      lastline <- 414
+      # m1 <- mget(ls())
+      #save(m1, file = "diagnose.Rda")
+      #rm(m1)
       y.orthog <- y - sparsereg_GCV(y, X.dum, id0 = NULL)$fit
       
       colnames(X.dum) <- c("X1", "X2")
@@ -424,7 +466,12 @@ hoe.inner <-
           FUN = function(z)
             fastLm(z ~ cbind(1, treat))$res
         )
-      treat.orthog <- treat - sparsereg_GCV(treat, X.dum, id0 = NULL)$fit
+      lastline <- 427
+      # m1 <- mget(ls())
+      #save(m1, file = "diagnose.Rda")
+      #rm(m1)
+      treat.orthog <-
+        treat - sparsereg_GCV(treat, X.dum, id0 = NULL)$fit
       
     }
     
@@ -438,9 +485,9 @@ hoe.inner <-
       
       #basest.all.inner <-svd(apply(basest.all,2,scale2))$u
       basest.all.inner <-
-        basest.all[, check.cor(basest.all[replaceme < 3, ])$k] #orthog.me(treat.orthog, basest.all, weights.lm = (replaceme<3))
+        basest.all[, check.cor(basest.all[replaceme < 3,])$k] #orthog.me(treat.orthog, basest.all, weights.lm = (replaceme<3))
       basesy.all.inner <-
-        basesy.all[, check.cor(basesy.all[replaceme < 3, ])$k] #orthog.me(y.orthog, basesy.all, weights.lm = (replaceme<3))
+        basesy.all[, check.cor(basesy.all[replaceme < 3,])$k] #orthog.me(y.orthog, basesy.all, weights.lm = (replaceme<3))
       
       id.temp <- NULL
       if (length(id) > 0)
@@ -448,14 +495,14 @@ hoe.inner <-
       
       st <-
         sparsereg(treat[replaceme < 3],
-                  basest.all.inner[replaceme < 3,],
+                  basest.all.inner[replaceme < 3, ],
                   id.temp,
                   edf = T,
                   alpha.prior = "parametric")
       select.lin.t <- (abs(st$coef) > 1e-3)
       
       sy <-
-        sparsereg(y[replaceme < 3], basesy.all.inner[replaceme < 3,], id.temp, edf =
+        sparsereg(y[replaceme < 3], basesy.all.inner[replaceme < 3, ], id.temp, edf =
                     T)
       select.lin.y <- (abs(sy$coef) > 1e-3)
       
@@ -510,7 +557,7 @@ hoe.inner <-
         }
         
       } else {
-        Xmat.adjust <- as.matrix(cbind(lin.adj[replaceme > 2,]))
+        Xmat.adjust <- as.matrix(cbind(lin.adj[replaceme > 2, ]))
         
       }
       
@@ -524,9 +571,10 @@ hoe.inner <-
       
       if (length(id) > 0) {
         id.2 <- id[replaceme > 2]
-        y2 <- lm(y0[replaceme > 2] ~ I(treat0[replaceme > 2])+ Xmat.adjust)$res
+        y2 <- lm(y0[replaceme > 2] ~ Xmat.adjust)$res
         treat2 <- lm(treat0[replaceme > 2] ~ Xmat.adjust)$res
-        res.y.temp <- suppressMessages(predict(lmer(y2 ~ (1 | id.2))))
+        res.y.temp <-
+          suppressMessages(predict(lmer(y2 ~ (1 | id.2))))
         res.t.temp <-
           suppressMessages(predict(lmer(treat2 ~ (1 | id.2))))
         

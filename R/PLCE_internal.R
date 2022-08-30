@@ -29,7 +29,7 @@ makebases <-
     inter.schedule <- cbind(rep(1:nt, each = nt),
                             rep(1:nt, by = nt))
     inter.schedule <-
-      inter.schedule[inter.schedule[, 1] >= inter.schedule[, 2], ]
+      inter.schedule[inter.schedule[, 1] > inter.schedule[, 2], ]
     sample.cor <- 1:length(treat)
     sample.cor <- which(replaceme > 4)
     if (length(sample.cor) > 1000) {
@@ -137,6 +137,9 @@ orthog.me <- function(y,
     return(NULL)
   }
   
+  ## Try not orthogonalizing?
+  
+  # return(X)
   
   if (length(weights.lm) == 0)
     weights.lm <- rep(1, length(y))
@@ -189,7 +192,7 @@ trimbases.boot <-
     
     glmnet1 <- cv.glmnet(as.matrix(basesy0)[replaceme>4,],y[replaceme>4])
     keeps <- which(coef(glmnet1)[-1]!=0)
-    if(length(keeps)<3) keeps <- unique(c(1:3,keeps))
+    if(length(keeps)==0) keeps <- 1:3
     return(basesy0[,keeps])
     
     n <- length(y)
@@ -207,6 +210,10 @@ trimbases.boot <-
     numsamp <- length(indsamp)
     numsamp <- min(numsamp, 1000)
     
+    
+    lastline <- 214000
+    # m1 <- mget(ls())
+    # save(m1, file="diagnose.Rda" ); rm(m1)
     sy0 <-
      sparsereg_GCV(y,
                     basesy0)
@@ -222,6 +229,10 @@ trimbases.boot <-
       sds.boot <- apply(basesy0.boot, 2, sd_cpp2)
       basesy0.boot[, sds.boot < 0.01] <-
         rnorm(length(samp.curr) * sum(sds.boot < 0.01))
+      
+      lastline <- 233000
+      # m1 <- mget(ls())
+      # save(m1, file="diagnose.Rda" ); rm(m1)
       sy0 <-
         sparsereg_GCV(y[samp.curr],
                       basesy0.boot)
@@ -455,8 +466,9 @@ create.inter.basis <- function(theta, resy, res1.2, x, replaceme) {
   cor1 <- ifelse(sd_cpp2(basis) > 0,
                  abs(corSpearman(basis[replaceme > 4], resy[replaceme > 4])),
                  #abs(cor(basis[replaceme > 4], resy[replaceme > 4], method = "spearman")),
-                 1e-5)
-  cor.out <- log(max(1e-5, cor1))
+                 0)
+  cor.out <- log(1+abs(cor1))
+  # cor.out <- log(max(1e-5, cor1))
   output <- list("basis" = basis, "logcor" = cor.out)
   return(output)
 }
@@ -489,7 +501,7 @@ makebases.interf <- function(X.interfy, resy, replaceme) {
       opt.y <-
         optimize(
           cor1,
-          interval = c(-4, 4),# + rot.est,
+          interval = c(-2, 2) + rot.est,
           resy = resy[replaceme.temp != 0],
           res1.2 = X.interfy$Xvars[replaceme.temp != 0, i.interf],
           x = X.interfy$Xmatvars[replaceme.temp != 0 , i.interf],
@@ -511,11 +523,8 @@ makebases.interf <- function(X.interfy, resy, replaceme) {
         )$basis
     }
   }
-  
-  X.resy <- X.resy[,which(apply(X.resy,2,sd)>0)]
   X.resy <-
     cbind(lm(resy ~ X.resy, weights = 1 * (replaceme %in% c(3, 4)))$fit, X.resy)
-  
   orthog.me(resy, X.resy, weights.lm = 1 * (replaceme %in% c(3, 4)))
 }
 
@@ -531,20 +540,62 @@ scale2 <- function(z) {
   out
 }
 
+bs.me_mdei <- function(x, varname = "X") {
+  x <- x - mean(x)
+  if (length(unique(x)) <= 2){
+    m1 <- as.matrix(x)
+    m1 <- apply(m1, 2, scale)
+    colnames(m1)<-paste(varname,"linear",sep="_")
+    return(m1)
+  }
+  if (length(unique(x)) <= 3){
+    m1<-as.matrix(cbind(x, x ^ 2))
+    m1 <- apply(m1, 2, scale)
+    colnames(m1)<-paste(varname,c("linear","quadratic"),sep="_")
+    return(m1)
+  }
+  if (length(unique(x)) <= 4){
+    m1<-cbind(x, x ^ 2, x ^ 3-3*x^2)
+    m1 <- apply(m1, 2, scale)
+    colnames(m1)<-paste(varname,c("linear","quadratic","cubic"),sep="_")
+    return(m1)
+  }
+  
+  b1 <- bSpline2(x, df = 3)
+  colnames(b1) <- paste(varname,"spline",1:ncol(b1),sep="_")
+  x2 <- scale(x)
+  #m1 <-
+  #  cbind(x, b1, ibs(x, df=3)[,-3], ibs(x, df=5)[,-5])
+  
+  m1 <-
+    cbind(x,  bSpline2(x, df = 3),  ibs(x, df=3)[,-3])#, ibs(x, df=5)[,-5])    
+  colnames(m1)[1]<-paste(varname,"linear",sep="_")
+  x2 <- scale(x)
+  sd.x <- sd(x)
+  x3 <- x2-1
+  x4 <- x2+1
+  m2 <- cbind(#x,b1,
+    #m1,
+    x,
+    x2^2-1, x2^3-3*x2, x2^4-6*x2^2+3,
+    x3^2-1, x3^3-3*x3, x3^4-6*x3^2+3,
+    x4^2-1, x4^3-3*x4, x4^4-6*x4^2+3
+  )
+  m1 <- cbind(m2)
+  m1 <- apply(m1, 2, scale)
+  #m1 <- svd(m1)$u
+  #m1 <- apply(m1, 2, scale)
+  colnames(m1) <- paste(varname,"spline",1:ncol(m1),sep="_")
+  return(m1)
+}
+
 
 bs.me <- function(x, degree = 5) {
-  # n <- length(x)
-  # x <- (rank(x) - 1) / (n)
-  # x <- 2 * x - 1
-  # basis.out <- NULL
-  # for (i.basis in 1:degree) {
-  #    basis.out<-cbind(basis.out,cos(i.basis*acos(x)),cos(-i.basis*acos(x)))
-  # }
-  x<-x-mean(x)
-  b1<-bs(x, degree = 3, knots = median(x))
+  x<-scale(x)
   basis.out <-
-    cbind(1,x, b1, bs(-x, degree = 3, knots = median(x))[,ncol(b1)])
-  basis.out[, check.cor(basis.out, 0.0001)$k]
+    cbind(x, bSpline2(x, degree=3, knots=0))#, bSpline2(x, degree=5, knots=0))
+  basis.out <- basis.out[, check.cor(basis.out, 0.0001)$k]
+  apply(as.matrix(basis.out),2,FUN=function(x) x/sd(x))
   
 }
 
@@ -731,6 +782,12 @@ check.cor <- function(X, thresh = 0, nruns = 2) {
 ### GCV for sparsereg
 
 sparsereg_GCV <- function(y0, X0, id0 = NULL, usecpp = TRUE) {
+  norms <- which(apply(X0, 2, sd)==0)
+  for(i.fill in norms){
+    x.temp <- rnorm(length(y0))
+    x.temp <- lm(x.temp~y0)$res
+    X0[,i.fill] <- x.temp
+  }
   model.out <- sparsereg(y = y0, X = X0, id = id0)
   return(model.out)
   
@@ -864,7 +921,6 @@ make.soe <-
     mat.orthog2[weights.est == 0, keeps]
   }
 
-#' @importFrom ranger ranger
 
 allbases <- function(y,
                      y2.b,
@@ -876,7 +932,6 @@ allbases <- function(y,
                      replaceme,
                      fit.interference,
                      fit.treatment.heteroskedasticity,
-                     pscore.est,
                      inter.schedule.obj = NULL) {
   n <- length(y)
   replaceme <- make.replaceme(y, id)
@@ -886,25 +941,22 @@ allbases <- function(y,
   #cat("#####  Step 1: Constructing conditional mean bases\n")
   # tic("generate.bases")
   basest0 <- generate.bases(treat.b, treat, X, X, id = NULL, replaceme)
-  sds.t56 <- apply(basest0[replaceme>4,],2,sd)
-  sds.t34 <- apply(basest0[replaceme%in%c(3,4),],2,sd)
-  sds.t12 <- apply(basest0[replaceme%in%c(1,2),],2,sd)
-  sds.t <- sds.t56*sds.t34*sds.t12
-  basest0 <- as.matrix(basest0[,sds.t>0])
-  colnames(basest0) <- paste("X",1:ncol(basest0),sep="_")
   basest0 <- apply(basest0, 2, scale2)
+  sds <- apply(basest0, 2, FUN=function(z) min(tapply(z,replaceme, sd)))
+  basest0 <- basest0[,sds>0]
+  lastline <- 949000
+  # m1 <- mget(ls())
+  # save(m1, file="diagnose.Rda" ); rm(m1)
   treat.b.2 <-
-    treat.b - basest0 %*% sparsereg_GCV(treat.b[replaceme > 4], basest0[replaceme > 4, ])$coef
+    treat.b - basest0 %*% sparsereg_GCV(treat.b[replaceme > 4], basest0[replaceme >
+                                                                          4, ])$coef#,   id=NULL)$fitted
+  #basest0 <- cbind(basest0, generate.bases(treat.b.2, treat, X, X, id=NULL,replaceme))
   basest0 <- cleanNAs(basest0)
   
   basesy0 <-
-    generate.bases(y2.b, y2.b, cbind(pscore.est,X), cbind(pscore.est,X), id = NULL, replaceme)
-  sds.y56 <- apply(basesy0[replaceme>4,],2,sd)
-  sds.y34 <- apply(basesy0[replaceme%in%c(3,4),],2,sd)
-  sds.y12 <- apply(basesy0[replaceme%in%c(1,2),],2,sd)
-  sds.y <- sds.y56*sds.y34*sds.y12
-  basesy0 <- as.matrix(basesy0[,sds.y>0])
-  
+    generate.bases(y2.b, y2.b, cbind(X), cbind(X), id = NULL, replaceme)
+  sds <- apply(basesy0, 2, FUN=function(z) min(tapply(z,replaceme, sd)))
+  basesy0 <- basesy0[,sds>0]
   y2.b.2 <- y2.b - sparsereg(y2.b, basesy0,   id = NULL)$fitted
   #basesy0.2 <- generate.bases(y2.b.2, y2.b.2, cbind(X), cbind(X),id=NULL, replaceme) ## Don't need REs--already partialed out!
   #basesy0<-cbind(basesy0,basesy0.2)
@@ -949,8 +1001,8 @@ allbases <- function(y,
     basest2.0 <-
       generate.bases(res2.b,
                      res2.b,
-                     cbind(pscore.est,X),
-                     cbind(pscore.est,X),
+                     X,
+                     X,
                      id = NULL,
                      replaceme,
                      alwaysinter = res2.b)
@@ -997,12 +1049,7 @@ allbases <- function(y,
   X.interfy <- X.interft <- NULL
   if (fit.interference) {
     # tic("interference bases")
-    # model.df <- data.frame(treat,X)[replaceme>4,]
-    # pscore.model <- ranger(treat~.,data=model.df )
-    # pscore.est <- predict(pscore.model, data=data.frame(X))$predictions
-    # X.interfy <- generate.Xinterf(res1.y, cbind(pscore.est, X), treat, replaceme)
-    X.interfy <- generate.Xinterf(res1.y, cbind(pscore.est, X), treat, replaceme)
-    
+    X.interfy <- generate.Xinterf(res1.y, X, treat, replaceme)
     X.interft <- generate.Xinterf(res1.2, X, NULL, replaceme)
     # toc()
   }
@@ -1018,7 +1065,24 @@ allbases <- function(y,
   if (length(basest2.0) == 0)
     basest2.0 <- cbind(rnorm(n), rnorm(n))
   
-  
+  replaceme3<-ceiling(replaceme/2)
+  for(i.r in 1:3){
+    basesy0[replaceme3==i.r,]<-apply(basesy0[replaceme3==i.r,],2,scale2)
+    basest0[replaceme3==i.r,]<-apply(basest0[replaceme3==i.r,],2,scale2)
+    basest2.0[replaceme3==i.r,]<-apply(basest2.0[replaceme3==i.r,],2,scale2)
+    if(fit.interference){
+      if(is.matrix(X.interfy)){
+        print(dim(X.interfy))
+       X.interfy = as.matrix(X.interfy)
+       X.interfy[replaceme3==i.r,]<-apply(X.interfy[replaceme3==i.r,],2,scale2)
+      }
+      if(is.matrix(X.interft)){
+        X.interft = as.matrix(X.interft)
+        X.interft[replaceme3==i.r,]<-apply(X.interft[replaceme3==i.r,],2,scale2)
+      }
+     }
+    
+  }
   #if(abs(cor(fits.replaceme.y,y))>abs(cor(fits.replaceme,treat))) fits.replaceme<-fits.replaceme.y
   output <- list(
     "basesy0" = basesy0,
