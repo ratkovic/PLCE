@@ -23,7 +23,7 @@ plce(
 \item{treat}{Treatment variable, for which the marginal effect is desired.
 May be continous, binary, or count.}
 
-\item{X}{Matrix of covariates to be adjusted for in estimating the marginal effect. 
+\item{X}{Matrix of covariates to be adjusted for in estimating the marginal effect.
 A machine learning method is used to adjust not just for the covariates but also
 nonlinear, interactive functions of the covariates.}
 
