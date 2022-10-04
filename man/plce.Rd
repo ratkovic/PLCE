@@ -9,10 +9,10 @@ plce(
   treat,
   X,
   id = NULL,
-  num.fit = 10,
+  num.fit = 25,
   var.type = "HC3",
   sens = TRUE,
-  printevery = 5,
+  printevery = 10,
   fit.interference = TRUE,
   fit.treatment.heteroskedasticity = TRUE
 )
@@ -29,14 +29,14 @@ nonlinear, interactive functions of the covariates.}
 
 \item{id}{A vector with elements denoting groupings to fit via random effects.}
 
-\item{num.fit}{The number of cross-fitting iterations to run.  Default is 10.}
+\item{num.fit}{The number of cross-fitting iterations to run.  Default is 25.}
 
 \item{var.type}{The type of variance estimate, passed to \code{vcovHC} in sandwich. Options are
 \code{HC0}, \code{HC1}, \code{HC2}, \code{HC3}, with \code{HC3} the default.}
 
 \item{sens}{Whether to fit the sensitivity analysis using \code{sensemakr}.}
 
-\item{printevery}{How frequently to print output during estimation.  Default is 5.}
+\item{printevery}{How frequently to print output during estimation.  Default is 10.}
 
 \item{fit.interference}{Whether to adjust for interference.  Default is \code{TRUE}.}
 
