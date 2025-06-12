@@ -10,10 +10,25 @@ The method, the Partially Linear Causal Effect (PLCE) model, models both the tre
 
 For more details, see  [Ratkovic (2021)](https://scholar.princeton.edu/sites/default/files/plce_round3.pdf).
 
+## Docker Image
+
+Running the Docker image of an Rstudio server with the package already installed is the recommended way to use this package. If you have not yet installed Docker Desktop, do so [here](https://www.docker.com/products/docker-desktop/). After installing Docker, the image can be pulled from Docker hub in a terminal with:
+
+```
+docker pull mannheimsds/plce
+```
+
+Then, after ensuring to replace the `plce_data_path/` with your own path to your data that you would like to work with, run a container of the Docker image:
+
+```
+docker run -d -p 8787:8787 --mount type=bind,source="plce_data_path/",target=/home/rstudio/plce_data -e PASSWORD=rstudio mannheimsds/plce
+```
+
+The Rstudio server will then be run locally at http://localhost:8787/, with the default user and password both being `rstudio`.
 
 ## Installation 
 
-The latest version can be installed by:
+The latest version can also be installed in R by:
 ```R
 devtools::install_github('ratkovic/PLCE')
 ```
