@@ -10,40 +10,18 @@ The method, the Partially Linear Causal Effect (PLCE) model, models both the tre
 
 For more details, see  [Ratkovic (2021)](https://scholar.princeton.edu/sites/default/files/plce_round3.pdf).
 
+## Docker Image
 
-## Installation 
+Running the Docker image of an Rstudio server with the package already installed is the recommended way to use this package. If you have not yet installed Docker Desktop, do so [here](https://www.docker.com/products/docker-desktop/). After installing Docker, the image can be pulled from Docker hub in a terminal with:
 
-The latest version can be installed by:
-```R
-devtools::install_github('ratkovic/PLCE')
+```
+docker pull mannheimsds/plce
 ```
 
+Then, after ensuring to replace the `plce_data_path/` with your own path to your data that you would like to work with, run a container of the Docker image:
 
-## Troubleshooting installation
-
-The software relies on `C++` code integrated into the `R` code through the `Rcpp` package.  If the software does not run on your machine, it may be fixed by ensuring that your compilers are set up properly.
-
-This advice below comes from `KRLS` by Hazlet and Sonnet [(link)](https://github.com/lukesonnet/KRLS).
-
-#### Windows
-If you are on Windows, you will need to install [RTools](https://cran.r-project.org/bin/windows/Rtools/) if you haven't already. If you still are having difficulty with installing and it says that the compilation failed, try installing it without support for multiple architectures:
-```R
-devtools::install_github('ratkovic/PLCE', args=c('--no-multiarch'))
+```
+docker run -d -p 8787:8787 --mount type=bind,source="plce_data_path/",target=/home/rstudio/plce_data -e PASSWORD=rstudio mannheimsds/plce
 ```
 
-#### Mac OSX
-
-In order to compile the `C++` in this package, `RcppArmadillo` will require you to have compilers installed on your machine. You may already have these, but you can install them by running:
-
-```bash
-xcode-select --install
-```
-
-If you are having problems with this install on Mac OSX, specifically if you are getting errors with either `lgfortran` or `lquadmath`, then try open your Terminal and try the following:
-
-```bash
-curl -O http://r.research.att.com/libs/gfortran-4.8.2-darwin13.tar.bz2
-sudo tar fvxz gfortran-4.8.2-darwin13.tar.bz2 -C /
-```
-
-Also see section 2.16 [here](http://dirk.eddelbuettel.com/code/rcpp/Rcpp-FAQ.pdf)
+The Rstudio server will then be run locally at http://localhost:8787/, with the default user and password both being `rstudio`.
